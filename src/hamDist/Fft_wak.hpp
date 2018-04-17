@@ -15,7 +15,7 @@ The pattern/text input file must contain its lenght then the pattern/text
 
 
 extern "C" {
-	#include "../fftw-3.3.7/api/fftw3.h"
+	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
 }
 
 using std::cout;

@@ -21,7 +21,7 @@ The pattern (text) input file must contain its lenght then the pattern (text)
 #include <chrono>
 
 extern "C" {
-	#include "../fftw-3.3.7/api/fftw3.h"
+	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
 }
 
 using namespace std;
@@ -228,7 +228,7 @@ int main(int argc, char* argv[]) {
 
 	// Add the tmp results
 	for (int32_t i = 0; i < size_res; i++)
-		res[i] = (int)round(tmp[i+size_pattern-1]/size_fft);
+		res[i] = (int)round(tmp[i+size_pattern-1]/size_ffts);
 
 	// T² * P²
 	PoweredTextCoeff(size_ffts, text, tmp, 2);

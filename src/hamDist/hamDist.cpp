@@ -1,5 +1,5 @@
 /* Copyright : ???
-Author : Tatiana Rocher, tatiana.rocher@gmail.com 
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
 install the fftw3 library
@@ -19,7 +19,7 @@ The pattern/text input file must contain its lenght then the pattern/text
 #include <chrono>
 
 extern "C" {
-	#include "../fftw-3.3.7/api/fftw3.h"
+	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
 }
 
 #include "Fft_wak.hpp"
@@ -66,8 +66,6 @@ int CharToInt(char letter) {
 }
 
 char IntToChar(int val) {
-	if (val >k_nb_letters)
-		cout << "lettre trop grande " << val << endl;
 	return (char) val;
 }
 
@@ -156,16 +154,34 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 				int *res) {
 	InitTabZeros(size_res, res);
 
+	chrono::time_point<chrono::system_clock> start, mid, end;
+	chrono::duration<double> texec;
 	char current_char;
 	for (auto j = frequent->begin(); j != frequent->end(); ++j) {
 		current_char = *j;
+
+		start = chrono::system_clock::now();
 		MatchLetterText(size_text, text, current_char, fft_text);
 		MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
+		end = chrono::system_clock::now();
+		texec = end-mid;
+		cout << "	bit vect : " << texec.count() << "s" << endl;
+		mid= end;
 
 		ReversePattern(size_pattern, fft_pattern);
 		fft_text->ExecFFT();
 		fft_pattern->ExecFFT();
+		end = chrono::system_clock::now();
+		texec = end-mid;
+		cout << "	fft exec : " << texec.count() << "s" << endl;
+		mid = end;
+
 		fft_res->FFTMultiplication(fft_text, fft_pattern);
+		end = chrono::system_clock::now();
+		texec = end-mid;
+		cout << "	mult + iexec : " << texec.count() << "s" << endl;
+		mid = end;
+
 		fft_res->ExecFFT();
 
 		for (int32_t i = 0; i < size_res; ++i) {
@@ -173,6 +189,12 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 			// but a little inferior, the +0,5 corrects the cast into an integer
 			res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
 		}
+
+			end = chrono::system_clock::now();
+			texec = end-mid;
+			cout << "	write res : " << texec.count() << "s" << endl;
+			mid = end;
+
 	}
 }
 
@@ -182,7 +204,7 @@ void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 	for (int32_t i = 0; i < size_text; ++i) {
 		if (IsInfreq(text[i], infreq)) {
 			current_char = CharToInt(text[i]);
-			for (int32_t j = 0; j < infreq[current_char].size(); ++j) { 
+			for (int32_t j = 0; j < infreq[current_char].size(); ++j) {
 				if (i >= infreq[current_char][j]) {
 					res[i-infreq[current_char][j]]++;
 				}
@@ -191,7 +213,7 @@ void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 	}
 }
 
-void WriteOuput(int32_t size_res, int *res, ofstream &file_out) {
+void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &file_out) {
 	string buffer;
 	buffer.reserve(LIMIT);
 	string res_i_str;
@@ -202,7 +224,7 @@ void WriteOuput(int32_t size_res, int *res, ofstream &file_out) {
         	buffer.resize(0);
     	}
     	buffer.append(res_i_str);
-    	buffer.append("\n");
+    	buffer.append(" ");
 		}
 	file_out << buffer;
 }
@@ -266,18 +288,29 @@ int main(int argc, char* argv[]) {
 	int32_t threshold_freq = sqrt(size_pattern *log2(size_text));
 	vector<char> frequent;
 	vector<int32_t> *infrequent = new vector<int32_t>[k_nb_letters];
+
+	end = chrono::system_clock::now();
+	texec = end-mid;
+	cout << "Init : " << texec.count() << "s" << endl;
+	mid= end;
+
 	SortfreqInfreqCaract(size_pattern, pattern, threshold_freq,
 						&frequent, infrequent);
 
-    // cout << "freq : ";
-    // for (int i = 0; i < frequent.size(); i++)
-    //  	cout << frequent[i] << " ";
-    //  cout << endl;
+    cout << "freq : ";
+    for (int i = 0; i < frequent.size(); i++)
+     	cout << frequent[i] << " ";
+     cout << endl;
+
+	 end = chrono::system_clock::now();
+	 texec = end-mid;
+	 cout << "sort freq infreq : " << texec.count() << "s" << endl;
+	 mid= end;
 
     // cout << "infreq : ";
     // for (int i = 0; i < k_nb_letters; i++)
     //  	// if (infrequent[i].size() > 0)
-	   //   	cout << i << " " << IntToChar(i) << " ";
+	//      	cout << i << " " << IntToChar(i) << " ";
     //  cout << endl;
 
 	// Init size_res : length of the res table which indicates the hamm dist
@@ -291,15 +324,34 @@ int main(int argc, char* argv[]) {
 		stream_text.get(character);
 		text[i] = character;
 	}
+	end = chrono::system_clock::now();
+	texec = end-mid;
+	cout << "read text : " << texec.count() << "s" << endl;
+	mid= end;
 
 	ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
 				fft_text, fft_pattern, fft_tmp, res);
-	
+
+	end = chrono::system_clock::now();
+	texec = end-mid;
+	cout << "total freq : " << texec.count() << "s" << endl;
+	mid= end;
+
 	ComputeInfreq(size_text, text, size_res, infrequent, res);
+
+	end = chrono::system_clock::now();
+	texec = end-mid;
+	cout << "total infreq : " << texec.count() << "s" << endl;
+	mid = end;
 
 	// Write in output file
 	cout << "Writing results in output file: " << out << endl;
-	WriteOuput(size_res, res, file_out);
+	WriteOuput(size_pattern, size_res, res, file_out);
+
+	end = chrono::system_clock::now();
+	texec = end-mid;
+	cout << "write out : " << texec.count() << "s" << endl;
+	mid = end;
 
 	stream_text.close();
 	file_out.close();
@@ -313,6 +365,8 @@ int main(int argc, char* argv[]) {
 	delete fft_tmp;
 
 	end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "Free : " << texec.count() << "s" << endl;
     texec = end-start;
     cout << "Total time : " << texec.count() << "s" << endl;
 
