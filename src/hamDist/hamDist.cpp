@@ -17,6 +17,7 @@ The pattern/text input file must contain its lenght then the pattern/text
 #include <cassert>
 #include <cstdint>
 #include <chrono>
+#include <unistd.h>
 
 extern "C" {
 	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
@@ -28,21 +29,28 @@ using namespace std;
 
 // int NBLETTER = 26;
 int k_nb_letters = 128;
-int LIMIT = 1000;  // size of the output buffer
+int LIMIT = 524288;  // size of the output buffer
 
-bool usage(int argc) {
-	if (argc < 3) {
-		cout << endl << "How to run: ./exec text pattern optionalOutput" << endl;
-		cout << "/!\\ The text (or pattern) input file must ";
-		cout << "contain its lenght first, then the text (or pattern)." << endl;
-		cout << "The size of the text is limited to 2^32/2 bits. ";
-		cout << "If your text is longer, consider spliting it."<< endl;
-		cout << "Be carefull to have only ascii characters ";
-		cout << "in the text and pattern" << endl;
-		cout << endl;
-		return false;
-	}
-	return true;
+bool Usage() {
+	cout << endl << "How to run: ./exec text pattern optionalOutput" << endl;
+	cout << "/!\\ The text (or pattern) input file must ";
+	cout << "contain its lenght first, then the text (or pattern)." << endl;
+	cout << "The size of the text is limited to 2^32/2 bits. ";
+	cout << "If your text is longer, consider spliting it."<< endl;
+	cout << "Be carefull to have only ascii characters ";
+	cout << "in the text and pattern" << endl;
+	cout << endl;
+}
+
+void LoadSavedPlan(char* file) {
+	// string fft_file = "../saveFfts/fft_patient_2pow18to20.txt";
+	int res=0;
+	// res = fftw_import_wisdom_from_filename(fft_file.c_str());
+	res = fftw_import_wisdom_from_filename(file);
+	if (res != 0)
+		cout << "Loading plans from " << file << " succeed."<< endl;
+	else
+		cout << "Error while loading plans from " << file << endl;
 }
 
 int UpperPowOfTwo(int val) {
@@ -213,40 +221,61 @@ void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 	}
 }
 
-void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &file_out) {
+void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &stream_out) {
 	string buffer;
 	buffer.reserve(LIMIT);
 	string res_i_str;
 	for (int32_t i = 0; i < size_res; ++i) {
     	res_i_str = to_string(size_pattern - res[i]);
     	if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
-        	file_out << buffer;
+        	stream_out << buffer;
         	buffer.resize(0);
     	}
     	buffer.append(res_i_str);
     	buffer.append(" ");
 		}
-	file_out << buffer;
+	stream_out << buffer;
 }
 
 
 
 int main(int argc, char* argv[]) {
-	if (!usage(argc)) return 0;
+	if (argc < 3) {
+		Usage();
+		return 0;
+	}
+
+	string file_text = argv[1];
+	string file_pattern = argv[2];
+	string file_out = "out.out";
+
+	char c;
+	while((c = getopt(argc, argv, "p:o:")) !=EOF) {
+		switch (c) {
+			case 'p':
+				LoadSavedPlan(optarg);
+				break;
+			case 'o':
+				file_out = optarg;
+				break;
+			default:
+				Usage();
+				break;
+		}
+	}
 
 	chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
 
+
 	int32_t size_pattern, size_text;
 	char *pattern;
 
 	// Open and read the file containing the pattern
-	string file_pattern = argv[2];
 	ReadPattern(file_pattern, &size_pattern, &pattern);
 
 	// Open file containing the text
-	string file_text = argv[1];
 	ifstream stream_text(file_text.c_str(), ios::in);
 
 	if (!stream_text) {
@@ -259,14 +288,8 @@ int main(int argc, char* argv[]) {
 			"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
 
 	// Open output file
-	string out;
-	if (argc < 4)
-		out = "out.out";
-	else
-		out = argv[3];
-
-	ofstream file_out(out.c_str(), ios::out | ios::trunc);
-	if (!file_out) {
+	ofstream stream_out(file_out.c_str(), ios::out | ios::trunc);
+	if (!stream_out) {
 		cout << "Can't open output file." << endl;
 		return 0;
 	}
@@ -290,7 +313,7 @@ int main(int argc, char* argv[]) {
 	vector<int32_t> *infrequent = new vector<int32_t>[k_nb_letters];
 
 	end = chrono::system_clock::now();
-	texec = end-mid;
+	texec = end-start;
 	cout << "Init : " << texec.count() << "s" << endl;
 	mid= end;
 
@@ -343,10 +366,12 @@ int main(int argc, char* argv[]) {
 	texec = end-mid;
 	cout << "total infreq : " << texec.count() << "s" << endl;
 	mid = end;
+	texec = end-start;
+	cout << endl << "Total algorithm : " << texec.count() <<"s" << endl << endl;
 
 	// Write in output file
-	cout << "Writing results in output file: " << out << endl;
-	WriteOuput(size_pattern, size_res, res, file_out);
+	cout << "Writing results in output file: " << file_out << endl;
+	WriteOuput(size_pattern, size_res, res, stream_out);
 
 	end = chrono::system_clock::now();
 	texec = end-mid;
@@ -354,11 +379,12 @@ int main(int argc, char* argv[]) {
 	mid = end;
 
 	stream_text.close();
-	file_out.close();
+	stream_out.close();
 
 	delete [] text;
 	delete [] pattern;
 	delete [] res;
+	delete [] infrequent;
 
 	delete fft_pattern;
 	delete fft_text;
@@ -368,7 +394,7 @@ int main(int argc, char* argv[]) {
     texec = end-mid;
     cout << "Free : " << texec.count() << "s" << endl;
     texec = end-start;
-    cout << "Total time : " << texec.count() << "s" << endl;
+    cout << endl << "Total time : " << texec.count() << "s" << endl;
 
 	return 0;
 }

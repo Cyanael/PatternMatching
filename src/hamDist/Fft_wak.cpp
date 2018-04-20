@@ -1,5 +1,5 @@
 /* Copyright : ???
-Author : Tatiana Rocher, tatiana.rocher@gmail.com 
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
 install the fftw3 library
@@ -38,7 +38,7 @@ FFT_wak::FFT_wak(unsigned int size, bool s) {
 
 
 FFT_wak::~FFT_wak() {
-	free(polynome_);
+	delete [] polynome_;
 	fftw_free(fft_str_);
 	fftw_destroy_plan(plan_);
 }
@@ -55,7 +55,7 @@ void FFT_wak::FFTMultiplication(FFT_wak *a, FFT_wak *b) {
 
 
 void FFT_wak::Rounding() {
-	double threshold = 0.001;  
+	double threshold = 0.001;
 	// Under this threshold, we assume that the computing made approximation errors
 	for (unsigned int i = 0; i < size_; i++) {
 		if (fabs(polynome_[i]) < threshold)

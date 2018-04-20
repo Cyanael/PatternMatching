@@ -8,6 +8,7 @@ You need to enter the min and max powers of 2 you will need.
 
 #include <iostream>
 #include <cmath>
+#include <chrono>
 
 extern "C" {
 	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
@@ -52,6 +53,10 @@ int main(int argc, char* argv[]) {
 	fftw_complex *fft_res = NULL;
 	double *table = NULL;
 
+	chrono::time_point<chrono::system_clock> start, end;
+    chrono::duration<double> texec;
+    start = chrono::system_clock::now();
+
     for (int i = min; i <= max; ++i) {
         size = pow(2, i);
 
@@ -62,8 +67,14 @@ int main(int argc, char* argv[]) {
         plan = fftw_plan_dft_c2r_1d(size, fft_res, table, flag);
     }
 	ret = fftw_export_wisdom_to_filename(argv[3]);
+
+	end = chrono::system_clock::now();
+    texec = end-start;
+    cout << "Total time : " << texec.count() << "s" << endl;
+
+	cout << "size : " << size << endl;
 	if (ret != 0)
-        cout << "Saving " << argv[3] << " succed."<< endl;
+        cout << "Saving plans in " << argv[3] << " succed."<< endl;
     else
         cout << "Error while saving in " << argv[3] << endl;
 
