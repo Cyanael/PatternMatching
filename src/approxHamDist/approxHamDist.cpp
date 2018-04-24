@@ -1,0 +1,379 @@
+/* Copyright : ???
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
+
+Compilation :
+install the fftw3 library
+g++ -std=c++11 approxHamDist.cpp Fft_wak.cpp -o ahd -lfftw3 -lm
+
+Execution :
+./hd text.in pattern.in optional.out
+The pattern/text input file must contain its lenght then the pattern/text
+*/
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <cmath>
+#include <cassert>
+#include <cstdint>
+#include <chrono>
+
+extern "C" {
+	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
+}
+
+#include "Fft_wak.hpp"
+
+using namespace std;
+
+// int k_nb_letters = 128;
+int k_nb_letters = 26;
+int LIMIT = 1000;  // size of the output buffer
+
+bool usage(int argc) {
+	if (argc < 4) {
+		cout << endl << "How to run: ./exec text pattern errorDistance optionalOutput" << endl;
+		cout << "/!\\ The text (or pattern) input file must ";
+		cout << "contain its lenght first, then the text (or pattern)." << endl;
+		cout << "The size of the text is limited to 2^32/2 bits. ";
+		cout << "If your text is longer, consider spliting it."<< endl;
+		cout << "Be carefull to have only ascii characters ";
+		cout << "in the text and pattern" << endl;
+		cout << endl;
+		return false;
+	}
+	return true;
+}
+
+int UpperPowOfTwo(int val) {
+	val--;
+	val |= val >> 1;
+	val |= val >> 2;
+	val |= val >> 4;
+	val |= val >> 8;
+	val |= val >> 16;
+	val++;
+	return val;
+}
+
+void InitTabZeros(int32_t size, int32_t *tab) {
+	for (int32_t i = 0; i < size; i++)
+		tab[i] = 0;
+}
+
+// int CharToInt(char letter) {
+// 	return (int) letter;
+// }
+//
+// char IntToChar(int val) {
+// 	return (char) val;
+// }
+int CharToInt(char letter) {
+	return (int) tolower(letter-97);
+}
+
+char IntToChar(int val) {
+	return (char) val+97;
+}
+
+
+void MapLetters(int size_alphabet, int *map) {
+    for (int i = 0; i < k_nb_letters; ++i)
+        map[i] = rand()%size_alphabet;
+}
+
+char CharMap(char letter, int *map) {
+    return IntToChar(map[CharToInt(letter)]);
+}
+
+// Intialise the pattern, size_pattern and size_text  from a file
+void ReadPattern(string file, int32_t *size_pattern, char **pattern) {
+	ifstream file_pattern(file.c_str(), ios::in);
+	char character;
+
+	if (file_pattern) {
+		int size_tmp;
+		file_pattern >> size_tmp;
+		(*size_pattern) = size_tmp;
+
+		file_pattern.get(character);  // eliminate the \n character
+		(*pattern) = new char[size_tmp]();
+		for (int32_t i = 0; i < size_tmp; ++i) {
+			file_pattern.get(character);
+			(*pattern)[i] = character;
+		}
+
+		file_pattern.close();
+	}
+	else
+		cout << "Can't open pattern file." << endl;
+}
+
+bool SortVectofPair(pair<char, int> a, pair<char, int> b) {
+	return a.first < b.first;
+}
+
+void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
+						int *map, int size_alphabet, vector<char> *freq,
+                        vector<int32_t> *infreq) {
+    freq->clear();
+    infreq->clear();
+	for (int32_t i = 0; i < size_pattern; ++i) {
+        int current_val = map[CharToInt(pattern[i])];
+        if (infreq[current_val].size() == 0) {
+			vector<int32_t> v = {i};
+			infreq[current_val] = v;
+		}
+		else
+			infreq[current_val].push_back(i);
+	}
+	for (int32_t i = 0; i < size_alphabet; ++i) {
+		if (infreq[i].size() >= limit) {
+			freq->push_back(IntToChar(i));
+			infreq[i].clear();
+		}
+	}
+}
+
+bool IsInfreq(char letter, vector<int32_t> *infreq) {
+	if (infreq[CharToInt(letter)].size() > 0)
+		return true;
+	return false;
+}
+
+// Computes the boolean vector of the text
+// when there is a 1 where the matching letter is "letter"
+void MatchLetterText(int32_t size, char *text, char letter,
+					int *map, FFT_wak *fft_text) {
+	for (int32_t i = 0; i < size; ++i) {
+		if(CharMap(text[i], map) == letter)
+			fft_text->setVal(i, 1);
+		else
+			fft_text->setVal(i, 0);
+	}
+	if (size < fft_text->getSize()) {
+		for (int32_t i = size; i < fft_text->getSize(); ++i)
+			fft_text->setVal(i, 0);
+	}
+}
+
+
+void ReversePattern(int32_t size, FFT_wak *fft_pattern) {
+	double tmp;
+	for (int32_t i = 0; i < size/2; ++i) {
+		tmp = fft_pattern->getVal(i);
+		fft_pattern->setVal(i, fft_pattern->getVal(size-i-1));
+		fft_pattern->setVal(size-i-1, tmp);
+	}
+}
+
+
+void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
+				char *text, char *pattern, vector<char> *frequent, int *map,
+				FFT_wak *fft_text, FFT_wak *fft_pattern, FFT_wak *fft_res,
+				int *res) {
+	InitTabZeros(size_res, res);
+
+	char current_char;
+	for (auto j = frequent->begin(); j != frequent->end(); ++j) {
+		current_char = *j;
+		MatchLetterText(size_text, text, current_char, map, fft_text);
+		MatchLetterText(size_pattern, pattern, current_char, map, fft_pattern);
+
+		ReversePattern(size_pattern, fft_pattern);
+		fft_text->ExecFFT();
+		fft_pattern->ExecFFT();
+		fft_res->FFTMultiplication(fft_text, fft_pattern);
+		fft_res->ExecFFT();
+
+		for (int32_t i = 0; i < size_res; ++i) {
+			// sometime, the double variable is close to an integer
+			// but a little inferior, the +0,5 corrects the cast into an integer
+			res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
+		}
+	}
+}
+
+void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
+				int *map, vector<int32_t> *infreq, int *res) {
+	int current_val;
+	for (int32_t i = 0; i < size_text; ++i) {
+		if (IsInfreq(CharMap(text[i], map), infreq)) {
+			current_val = map[CharToInt(text[i])];
+			for (int32_t j = 0; j < infreq[current_val].size(); ++j) {
+				if (i >= infreq[current_val][j]) {
+					res[i-infreq[current_val][j]]++;
+				}
+			}
+		}
+	}
+}
+
+void KeepSmaller(int32_t size_res, int *tmp_res, int *res) {
+    for (int32_t i = 0; i < size_res; ++i)
+		if (res[i] > tmp_res[i])
+            res[i] = tmp_res[i];
+}
+
+void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &file_out) {
+	string buffer;
+	buffer.reserve(LIMIT);
+	string res_i_str;
+	for (int32_t i = 0; i < size_res; ++i) {
+    	res_i_str = to_string(size_pattern - res[i]);
+    	if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
+        	file_out << buffer;
+        	buffer.resize(0);
+    	}
+    	buffer.append(res_i_str);
+    	buffer.append("\n");
+	}
+	file_out << buffer;
+}
+
+
+
+int main(int argc, char* argv[]) {
+	if (!usage(argc)) return 0;
+
+	chrono::time_point<chrono::system_clock> start, mid, end;
+    chrono::duration<double> texec;
+    start = chrono::system_clock::now();
+
+	int32_t size_pattern, size_text;
+	char *pattern;
+
+	// Open and read the file containing the pattern
+	string file_pattern = argv[2];
+	ReadPattern(file_pattern, &size_pattern, &pattern);
+
+    double error_dist = atof(argv[3]);
+
+	// Open file containing the text
+	string file_text = argv[1];
+	ifstream stream_text(file_text.c_str(), ios::in);
+
+	if (!stream_text) {
+		cout << "Can't open text file." << endl;
+		return 0;
+	}
+
+	stream_text >> size_text;
+	assert(size_text >= size_pattern &&
+			"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
+
+	// Open output file
+	string out;
+	if (argc < 5)
+		out = "out.out";
+	else
+		out = argv[4];
+
+	ofstream file_out(out.c_str(), ios::out | ios::trunc);
+	if (!file_out) {
+		cout << "Can't open output file." << endl;
+		return 0;
+	}
+
+	char *text = new char[size_text]();
+
+	// Init size_fft: the lenght used for the FFTs
+	// It is a power of 2 (see FFTW documentation)
+	int32_t size_fft = UpperPowOfTwo(size_text);
+
+	// Initialise the fftw_plan. Should be done before initialising the in/output
+	FFT_wak *fft_text = new FFT_wak(size_fft);
+	FFT_wak *fft_pattern = new FFT_wak(size_fft);
+	FFT_wak *fft_tmp = new FFT_wak(size_fft, false);
+	// false indicates that we make a plan for a FFT inverse
+
+
+	// Init size_res : length of the res table which indicates the hamm dist
+	int32_t size_res = size_text - size_pattern + 1;
+	int *tmp_res = new int[size_res]();
+    int *res = new int[size_res]();
+	for (int32_t i = 0; i<size_res; ++i)
+		res[i] = size_pattern;
+
+	// Read the text
+	char character;
+    stream_text.get(character);  // eliminate the \n character
+	for (int32_t i = 0; i < size_text; ++i) {
+		stream_text.get(character);
+		text[i] = character;
+	}
+
+    int32_t threshold_freq = sqrt(size_pattern *log2(size_text));
+    vector<char> frequent;
+    vector<int32_t> *infrequent = new vector<int32_t>[k_nb_letters];
+
+    int32_t cpt_loop = log2(size_text);
+    int *map = new int[k_nb_letters];
+    int size_alphabet = 2 / error_dist;
+    for (int i = 0; i < cpt_loop; ++i) {
+        MapLetters(size_alphabet, map);
+
+        // cout << "map : ";
+        // for (int i = 0; i < k_nb_letters; ++i)
+        //     cout << "("<< IntToChar(i) << ", " << map[i] << ") ";
+        // cout << endl;
+
+        // Sort P's caracteres in frequent/infrequent caractere
+        SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
+                            size_alphabet, &frequent, infrequent);
+
+        // cout << "freq : ";
+        // for (int i = 0; i < frequent.size(); i++)
+        // 	cout << frequent[i] << " ";
+        //  cout << endl;
+		//
+        // cout << "infreq : ";
+        // for (int i = 0; i < k_nb_letters; i++)
+        //  	if (infrequent[i].size() > 0)
+        //  	  cout << i << " " << IntToChar(i) << " ";
+        // cout << endl;
+
+	    ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
+				    map, fft_text, fft_pattern, fft_tmp, tmp_res);
+
+        // cout << "freq : ";
+        // for (int i=0; i < size_res; ++i)
+        //     cout << tmp_res[i] << ", ";
+        // cout << endl;
+
+	    ComputeInfreq(size_text, text, size_res, map, infrequent, tmp_res);
+
+        // cout << "infreq : ";
+        // for (int i=0; i < size_res; ++i)
+        //     cout << tmp_res[i] << ", ";
+        // cout << endl;
+
+        KeepSmaller(size_res, tmp_res, res);
+    }
+
+	// cout << "res final : ";
+	// for (int i=0; i < size_res; ++i)
+	// 	cout << res[i] << ", ";
+	// cout << endl;
+
+	// Write in output file
+	cout << "Writing results in output file: " << out << endl;
+	WriteOuput(size_pattern, size_res, res, file_out);
+
+	stream_text.close();
+	file_out.close();
+
+	delete [] text;
+	delete [] pattern;
+	delete [] res;
+
+	delete fft_pattern;
+	delete fft_text;
+	delete fft_tmp;
+
+	end = chrono::system_clock::now();
+    texec = end-start;
+    cout << "Total time : " << texec.count() << "s" << endl;
+
+	return 0;
+}
