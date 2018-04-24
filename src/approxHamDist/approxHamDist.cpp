@@ -6,7 +6,7 @@ install the fftw3 library
 g++ -std=c++11 approxHamDist.cpp Fft_wak.cpp -o ahd -lfftw3 -lm
 
 Execution :
-./hd text.in pattern.in optional.out
+./hd text.in pattern.in errorDistance -o optional.out -p plan -c constante_loop 
 The pattern/text input file must contain its lenght then the pattern/text
 */
 
@@ -17,6 +17,7 @@ The pattern/text input file must contain its lenght then the pattern/text
 #include <cassert>
 #include <cstdint>
 #include <chrono>
+#include <unistd.h>
 
 extern "C" {
 	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
@@ -30,19 +31,26 @@ using namespace std;
 int k_nb_letters = 26;
 int LIMIT = 1000;  // size of the output buffer
 
-bool usage(int argc) {
-	if (argc < 4) {
-		cout << endl << "How to run: ./exec text pattern errorDistance optionalOutput" << endl;
-		cout << "/!\\ The text (or pattern) input file must ";
-		cout << "contain its lenght first, then the text (or pattern)." << endl;
-		cout << "The size of the text is limited to 2^32/2 bits. ";
-		cout << "If your text is longer, consider spliting it."<< endl;
-		cout << "Be carefull to have only ascii characters ";
-		cout << "in the text and pattern" << endl;
-		cout << endl;
-		return false;
-	}
-	return true;
+void Usage() {
+	cout << endl << "How to run: ./exec text pattern error_distance [-o optional_output] ";
+	cout << "[-p plan_to_load] [-c constante_loop]" << endl;
+	cout << "/!\\ The text (or pattern) input file must ";
+	cout << "contain its lenght first, then the text (or pattern)." << endl;
+	cout << "The size of the text is limited to 2^32/2 bits. ";
+	cout << "If your text is longer, consider spliting it."<< endl;
+	cout << "Be carefull to have only ascii characters ";
+	cout << "in the text and pattern or add your own mapping." << endl;
+	cout << endl;
+
+}
+
+void LoadSavedPlan(char* file) {
+	int res=0;
+	res = fftw_import_wisdom_from_filename(file);
+	if (res != 0)
+		cout << "Loading plans from " << file << " succeed."<< endl;
+	else
+		cout << "Error while loading plans from " << file << endl;
 }
 
 int UpperPowOfTwo(int val) {
@@ -78,8 +86,10 @@ char IntToChar(int val) {
 
 
 void MapLetters(int size_alphabet, int *map) {
+	// int seed = rand 
     for (int i = 0; i < k_nb_letters; ++i)
         map[i] = rand()%size_alphabet;
+        // map[i] = i*%size_alphabet;
 }
 
 char CharMap(char letter, int *map) {
@@ -234,23 +244,45 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &file
 
 
 int main(int argc, char* argv[]) {
-	if (!usage(argc)) return 0;
+	if (argc < 4) 
+		Usage();
 
 	chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
 
+
+    string file_text = argv[1];
+	string file_pattern = argv[2];
+    double error_dist = atof(argv[3]);
+    string file_out = "out.out";
+    int cst_loop = 1;
+
+    char c;
+	while((c = getopt(argc, argv, "p:o:c:")) !=EOF) {
+		switch (c) {
+			case 'c':
+				cst_loop = atoi(optarg);
+				break;
+			case 'p':
+				LoadSavedPlan(optarg);
+				break;
+			case 'o':
+				file_out = optarg;
+				break;
+			default:
+				Usage();
+				break;
+		}
+	}
+
 	int32_t size_pattern, size_text;
 	char *pattern;
 
 	// Open and read the file containing the pattern
-	string file_pattern = argv[2];
 	ReadPattern(file_pattern, &size_pattern, &pattern);
 
-    double error_dist = atof(argv[3]);
-
 	// Open file containing the text
-	string file_text = argv[1];
 	ifstream stream_text(file_text.c_str(), ios::in);
 
 	if (!stream_text) {
@@ -262,15 +294,8 @@ int main(int argc, char* argv[]) {
 	assert(size_text >= size_pattern &&
 			"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
 
-	// Open output file
-	string out;
-	if (argc < 5)
-		out = "out.out";
-	else
-		out = argv[4];
-
-	ofstream file_out(out.c_str(), ios::out | ios::trunc);
-	if (!file_out) {
+	ofstream stream_out(file_out.c_str(), ios::out | ios::trunc);
+	if (!stream_out) {
 		cout << "Can't open output file." << endl;
 		return 0;
 	}
@@ -309,14 +334,17 @@ int main(int argc, char* argv[]) {
 
     int32_t cpt_loop = log2(size_text);
     int *map = new int[k_nb_letters];
-    int size_alphabet = 2 / error_dist;
-    for (int i = 0; i < cpt_loop; ++i) {
+    int size_alphabet = min(2 / error_dist, (double)k_nb_letters);
+    cout << "Mapping on " << size_alphabet << " letters." << endl;
+    cout << "Number of loops: " << cpt_loop << endl;
+    for (int i = 0; i < cst_loop * cpt_loop; ++i) {
         MapLetters(size_alphabet, map);
 
-        // cout << "map : ";
-        // for (int i = 0; i < k_nb_letters; ++i)
-        //     cout << "("<< IntToChar(i) << ", " << map[i] << ") ";
-        // cout << endl;
+
+        cout << "map : ";
+        for (int i = 0; i < k_nb_letters; ++i)
+            cout << "("<< IntToChar(i) << ", " << map[i] << ") ";
+        cout << endl;
 
         // Sort P's caracteres in frequent/infrequent caractere
         SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
@@ -357,11 +385,11 @@ int main(int argc, char* argv[]) {
 	// cout << endl;
 
 	// Write in output file
-	cout << "Writing results in output file: " << out << endl;
-	WriteOuput(size_pattern, size_res, res, file_out);
+	cout << "Writing results in output file: " << file_out << endl;
+	WriteOuput(size_pattern, size_res, res, stream_out);
 
 	stream_text.close();
-	file_out.close();
+	stream_out.close();
 
 	delete [] text;
 	delete [] pattern;

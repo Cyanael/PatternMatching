@@ -6,7 +6,9 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-double m, n;
+	if (argc < 4)
+		cout << "Run with ./exec file1 file2 error" << endl;
+	double m, n;
 
 	string inText= argv[1];
 	ifstream fileText(inText.c_str(), ios::in);
@@ -23,17 +25,21 @@ double m, n;
 		return 0;
 	}
 
-	double dist_error = argv[3];
+	double dist_error = atof(argv[3]);
 
 
 	int i=0;
 	int error = 0;
 	while(fileText >> n){
 		filePattern >> m;
-		if (abs(m - n) > dist_error){
+		if ((1 - dist_error)*n > m) {
 			if (error == 0) {
-				cout << "erreur pos " << i << " " << n << " - " << m;
-				cout << " < " << dist_error << endl;
+				cout << "erreur pos " << i << " : (1-" << dist_error << ")*" << n << " : " << (1 - dist_error)*n << " > " << m << endl;
+			}
+		}
+		else if ((1+ dist_error)*n < m ) {
+			if (error == 0) {
+				cout << "erreur pos " << i << " : (1-" << dist_error << ")*" << n << " : " << (1+ dist_error)*n << " < " << m << endl;
 			}
 			error++;
 		}
