@@ -46,6 +46,7 @@ void Usage() {
 
 void LoadSavedPlan(char* file) {
 	int res=0;
+
 	res = fftw_import_wisdom_from_filename(file);
 	if (res != 0)
 		cout << "Loading plans from " << file << " succeed."<< endl;
@@ -69,13 +70,6 @@ void InitTabZeros(int32_t size, int32_t *tab) {
 		tab[i] = 0;
 }
 
-// int CharToInt(char letter) {
-// 	return (int) letter;
-// }
-//
-// char IntToChar(int val) {
-// 	return (char) val;
-// }
 int CharToInt(char letter) {
 	return (int) tolower(letter-97);
 }
@@ -86,10 +80,14 @@ char IntToChar(int val) {
 
 
 void MapLetters(int size_alphabet, int *map) {
-	// int seed = rand 
+	struct timespec ts;
+	if (timespec_get(&ts, TIME_UTC) == 0) {
+		couy << "error seed." << endl;
+	}
+	srandom(ts.tv_nsec ^ ts.tv_sec); // compute seed
+
     for (int i = 0; i < k_nb_letters; ++i)
-        map[i] = rand()%size_alphabet;
-        // map[i] = i*%size_alphabet;
+        map[i] = random()%size_alphabet;
 }
 
 char CharMap(char letter, int *map) {
