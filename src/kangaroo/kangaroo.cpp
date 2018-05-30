@@ -10,6 +10,8 @@ Author : https://www.geeksforgeeks.org/%C2%AD%C2%ADkasais-algorithm-for-construc
 
 using namespace std;
 
+int LIMIT = 524288;  // size of the output buffer
+
 // Structure to store information of a suffix
 struct suffix {
     int index;  // To store original index
@@ -18,7 +20,7 @@ struct suffix {
 
 
 bool Usage() {
-	cout << endl << "How to run: ./exec text pattern nb_errors optionalOutput" << endl;
+	cout << endl << "How to run: ./exec text pattern nb_errors -o optionalOutput" << endl;
 	cout << "/!\\ The text (or pattern) input file must ";
 	cout << "contain its lenght first, then the text (or pattern)." << endl;
 	cout << "The size of the text is limited to 2^32/2 bits. ";
@@ -74,12 +76,13 @@ int cmp(struct suffix a, struct suffix b)
 // argument, builds and return the suffix array for the given string
 void BuildSuffixArray(char* txt, int size_suff_array, int** suff_array) {
     // A structure to store suffixes and their indexes
-    struct suffix suffixes[size_suff_array];
+    // struct suffix suffixes[size_suff_array];
+    suffix *suffixes = new suffix[size_suff_array]();
 
     // Store suffixes and their indexes in an array of structures.
     // The structure is needed to sort the suffixes alphabatically
     // and maintain their old indexes while sorting
-    for (int i = 0; i < size_suff_array; i++)
+    for (int i = 0; i < size_suff_array; ++i)
     {
         suffixes[i].index = i;
         suffixes[i].rank[0] = txt[i] - 'a';
@@ -93,7 +96,8 @@ void BuildSuffixArray(char* txt, int size_suff_array, int** suff_array) {
     // At his point, all suffixes are sorted according to first
     // 2 characters.  Let us sort suffixes according to first 4
     // characters, then first 8 and so on
-    int ind[size_suff_array];  // This array is needed to get the index in suffixes[]
+    // int ind[size_suff_array];  // This array is needed to get the index in suffixes[]
+    int *ind = new int[size_suff_array]();
     // from original index.  This mapping is needed to get
     // next suffix.
     for (int k = 4; k < 2*size_suff_array; k = k*2)
@@ -105,7 +109,7 @@ void BuildSuffixArray(char* txt, int size_suff_array, int** suff_array) {
         ind[suffixes[0].index] = 0;
 
         // Assigning rank to suffixes
-        for (int i = 1; i < size_suff_array; i++)
+        for (int i = 1; i < size_suff_array; ++i)
         {
             // If first rank and next ranks are same as that of previous
             // suffix in array, assign the same new rank to this suffix
@@ -124,7 +128,7 @@ void BuildSuffixArray(char* txt, int size_suff_array, int** suff_array) {
         }
 
         // Assign next rank to every suffix
-        for (int i = 0; i < size_suff_array; i++)
+        for (int i = 0; i < size_suff_array; ++i)
         {
             int nextindex = suffixes[i].index + k/2;
             suffixes[i].rank[1] = (nextindex < size_suff_array)?
@@ -153,7 +157,7 @@ void Kasai(char* text_pattern, int32_t size_suff_array, int* suffixArr, int** lc
 
     // Process all suffixes one by one starting from
     // first suffix in txt[]
-    for (int i=0; i<size_suff_array; i++)
+    for (int i=0; i<size_suff_array; ++i)
     {
         /* If the current suffix is at n-1, then we don’t
            have next substring to consider. So lcp is not
@@ -182,8 +186,106 @@ void Kasai(char* text_pattern, int32_t size_suff_array, int* suffixArr, int** lc
     }
 }
 
+// Fills lookup array lookup[][] in bottom up manner.
+void BuildLU(int* lcp, int32_t size_suff_array, vector<int> *lu) {
+    // Initialize M for the intervals with length 1
+    for (int i = 0; i < size_suff_array; i++){
+        vector<int> v;
+        lu[i] = v;
+        lu[i].push_back(i);
+    }
+
+    // Compute values from smaller to bigger intervals
+    for (int j=1; (1<<j)<=size_suff_array; j++)
+    {
+        // Compute minimum value for all intervals with size 2^j
+        for (int i=0; (i+(1<<j)-1) < size_suff_array; i++)
+        {
+            // For arr[2][10], we compare arr[lookup[0][3]] and
+            // arr[lookup[3][3]]
+            if (lcp[lu[i][j-1]] < lcp[lu[i + (1<<(j-1))][j-1]])
+                lu[i].push_back(lu[i][j-1]);
+            else
+                lu[i].push_back(lu[i + (1 << (j-1))][j-1]);
+        }
+    }
+}
+
+// Returns minimum of arr[L..R]
+int Query(int* lcp, vector<int>* lu, int pos_start, int pos_end) {
+    int j = (int)log2(pos_end-pos_start+1);
+    // cout << "ecart " << j << endl;
+
+    if (lcp[lu[pos_start][j]] <= lcp[lu[pos_end - (1<<j) + 1][j]])
+        return lcp[lu[pos_start][j]];
+    else
+        return lcp[lu[pos_end - (1<<j) + 1][j]];
+}
+
+void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array, int* inv_suff_array,
+            int* lcp, vector<int>* lu, int32_t size_res, int nb_error_max, int* res) {
+    int32_t current_pos_p;
+    int32_t current_pos_t;
+    int current_nb_error;
+    int pas;
+    int start, end;
+    for (int32_t i = 0; i < size_res; ++i) {
+        current_pos_p = 0;
+        current_pos_t = i;
+        current_nb_error = 0;
+        // while(current_pos_p < size_pattern && current_nb_error <nb_error_max) {
+        //     cout << current_pos_t << " " << current_pos_p << " " << current_nb_error << endl;
+        //     start = inv_suff_array[current_pos_t];
+        //     end = inv_suff_array[current_pos_p+size_text];
+        //     cout << "query " << min(start, end) << " " << max(start, end)-1 << endl;
+        //     pas = Query(lcp, lu, min(start, end), max(start, end)-1);
+        //     cout << "pas " << pas << endl;
+        //     current_nb_error++;
+        //     current_pos_t += pas+1;
+        //     current_pos_p += pas+1;
+        // }
+        while (current_nb_error < nb_error_max) {
+            // cout << current_pos_t << " " << current_pos_p << " " << current_nb_error << endl;
+                start = inv_suff_array[current_pos_t];
+                end = inv_suff_array[current_pos_p+size_text];
+                // cout << "query " << min(start, end) << " " << max(start, end)-1 << endl;
+                pas = Query(lcp, lu, min(start, end), max(start, end)-1);
+                current_pos_t += pas+1;
+                current_pos_p += pas+1;
+                if (current_pos_p > size_pattern)
+                    break;
+                current_nb_error++;
+        }
+
+        if (current_pos_p < size_pattern)
+            res[i] = -1;
+        else
+            res[i] = current_nb_error;
+        // cout << "error : " << res[i] << endl << endl;
+    }
+}
+
+void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &file_out) {
+	string buffer;
+	buffer.reserve(LIMIT);
+	string res_i_str;
+	for (int32_t i = 0; i < size_res; ++i) {
+        if (res[i] == -1)
+            res_i_str = "N";
+        else
+            res_i_str = to_string(res[i]);
+    	if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
+        	file_out << buffer;
+        	buffer.resize(0);
+    	}
+    	buffer.append(res_i_str);
+    	buffer.append("\n");
+	}
+	file_out << buffer;
+}
+
 void printArr(int* arr, int n) {
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; ++i)
         cout << arr[i] << " ";
     cout << endl;
 }
@@ -198,7 +300,7 @@ int main(int argc, char* argv[]) {
 
 	string file_text = argv[1];
     string file_pattern = argv[2];
-    int32_t size_min_pattern = atoi(argv[3]);
+    int nb_error_max = atoi(argv[3]);
     string file_out = "out.out";
 
 	char c;
@@ -217,6 +319,12 @@ int main(int argc, char* argv[]) {
     chrono::duration<double> texec, tinit;
     start = chrono::system_clock::now();
 
+    ofstream stream_out(file_out.c_str(), ios::out | ios::trunc);
+	if (!stream_out) {
+		cout << "Can't open output file." << endl;
+		return 0;
+	}
+
 	int32_t size_text, size_pattern;
     char *text_pattern;
     ConcatTextPattern(file_text, file_pattern, &size_text, &size_pattern, &text_pattern);
@@ -224,20 +332,68 @@ int main(int argc, char* argv[]) {
     int32_t size_suff_array = size_text+size_pattern;
 	int *suff_array = new int[size_suff_array]();
     int *inv_suff_array = new int[size_suff_array]();
+    end = chrono::system_clock::now();
+    texec = end-start;
+    cout << "   Text-Pattern : " << texec.count() << endl;
+    mid= end;
     BuildSuffixArray(text_pattern, size_suff_array, &suff_array);
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "   SA : " << texec.count() << endl;
+    mid= end;
     BuildInvSuffArray(size_suff_array, suff_array, &inv_suff_array);
-
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "   ISA : " << texec.count() << endl;
+    mid= end;
     int *lcp = new int[size_suff_array]();
     Kasai(text_pattern, size_suff_array, suff_array, &lcp, inv_suff_array);
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "   LCP : " << texec.count() << endl;
+    mid= end;
+    // cout << "Suffix Array : \n";
+    // printArr(suff_array, size_suff_array);
+    // cout << "LCP Array : \n";
+    // printArr(lcp, size_suff_array);
 
-    cout << "Suffix Array : \n";
-    printArr(suff_array, size_suff_array);
-    cout << "\nLCP Array : \n";
-    printArr(lcp, size_suff_array);
+    vector<int> *lu = new vector<int>[size_suff_array]();
+    BuildLU(lcp, size_suff_array, lu);
+    // cout << "LU Array : " << endl;
+    // for (int i=0; i<size_suff_array; ++i) {
+    //     for (int j=0; j<lu[i].size(); ++j)
+    //         cout << lu[i][j] << " ";
+    //     cout << endl;
+    // }
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "   LU : " << texec.count() << endl;
+    mid= end;
+    end = chrono::system_clock::now();
+    texec = end-start;
+    cout << "Init : " << texec.count() << endl;
+    mid= end;
 
     int32_t size_res = size_text - size_pattern + 1;
     int *res = new int[size_res]();
-    // Kangaroo()
+    Kangaroo(size_text, size_pattern, size_suff_array, inv_suff_array, lcp, lu, size_res, nb_error_max, res);
+
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "Computation : " << texec.count() << endl;
+    mid= end;
+
+    // Write in output file
+    cout << "Writing results in output file: " << file_out << endl;
+    WriteOuput(size_pattern, size_res, res, stream_out);
+
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "Writing time : " << texec.count() << endl;
+    mid= end;
+    texec = end-start;
+    cout << "Total : " << texec.count() << endl;
+    mid= end;
 
     return 0;
 }
