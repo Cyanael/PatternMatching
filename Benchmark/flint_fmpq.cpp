@@ -11,7 +11,7 @@ using namespace std;
 int main(int argc, char* argv[]) {
     // char *str, *strf, *strg;
     if (argc < 3) {
-        cout << "Lancement : ./exec size_polynome nb_of_iterations." << endl;
+        cout << "Execution : ./exec size_polynome nb_of_iterations." << endl;
         return 0;
     }
 
@@ -22,6 +22,8 @@ int main(int argc, char* argv[]) {
     chrono::time_point<chrono::system_clock> start, end;
     chrono::duration<double> texec;
 
+    FLINT_TEST_INIT(state);
+
     int r;
     float ave = 0;
     for (int j = 0; j < nb_iter; ++j) {
@@ -31,9 +33,9 @@ int main(int argc, char* argv[]) {
     _fmpq_poly_set_length(g, size_text);
 
         for (int i = 0; i< size_text; ++i) {
-            r = random()%2;
+            r = random()%10;
             fmpq_poly_set_coeff_si(f, i, r);
-            r = random()%2;
+            r = random()%10;
             fmpq_poly_set_coeff_si(g, i, r);
         }
 

@@ -15,7 +15,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
    if (argc < 3) {
-        cout << "Lancement : ./exec size_polynome nb_of_iterations." << endl;
+        cout << "Execution : ./exec size_polynome nb_of_iterations." << endl;
         return 0;
     }
 
@@ -38,9 +38,9 @@ int main(int argc, char* argv[]) {
     _fmpz_poly_set_length(g, size_text);
 
         for (int i = 0; i< size_text; ++i) {
-            r = random()%2;
+            r = random()%10;
             fmpz_poly_set_coeff_si(f, i, r);
-            r = random()%2;
+            r = random()%10;
             fmpz_poly_set_coeff_si(g, i, r);
         }
 
