@@ -3,7 +3,7 @@ Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
 install the fftw3 library
-g++ -std=c++11 hamDist.cpp Fft_wak.cpp -o hd -lfftw3 -lm
+g++ -std=c++11 -O3 hamDist.cpp Fft_wak.cpp -o hd -lfftw3 -lm
 
 Execution :
 ./hd text.in pattern.in optional.out
@@ -29,7 +29,7 @@ using namespace std;
 
 // int NBLETTER = 26;
 int k_nb_letters = 128;
-int LIMIT = 524288;  // size of the output buffer
+int LIMIT = 1048576;  // size of the output buffer
 
 bool Usage() {
 	cout << endl << "How to run: ./exec text pattern optionalOutput" << endl;
@@ -98,10 +98,6 @@ void ReadPattern(string file, int32_t *size_pattern, char **pattern) {
 	}
 	else
 		cout << "Can't open pattern file." << endl;
-}
-
-bool SortVectofPair(pair<char, int> a, pair<char, int> b) {
-	return a.first < b.first;
 }
 
 void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
@@ -225,10 +221,12 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &stre
 	string buffer;
 	buffer.reserve(LIMIT);
 	string res_i_str;
+	int cpt = 0;
 	for (int32_t i = 0; i < size_res; ++i) {
     	res_i_str = to_string(size_pattern - res[i]);
     	if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
         	stream_out << buffer;
+			cpt++;
         	buffer.resize(0);
     	}
     	buffer.append(res_i_str);
@@ -320,7 +318,7 @@ int main(int argc, char* argv[]) {
 	SortfreqInfreqCaract(size_pattern, pattern, threshold_freq,
 						&frequent, infrequent);
 
-    cout << "freq : ";
+    cout << "freq " << frequent.size() << " : ";
     for (int i = 0; i < frequent.size(); i++)
      	cout << frequent[i] << " ";
      cout << endl;
@@ -388,7 +386,7 @@ int main(int argc, char* argv[]) {
 
 	delete fft_pattern;
 	delete fft_text;
-	delete fft_tmp;
+	// delete fft_tmp;
 
 	end = chrono::system_clock::now();
     texec = end-mid;

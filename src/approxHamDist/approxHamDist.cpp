@@ -6,7 +6,7 @@ install the fftw3 library
 g++ -std=c++11 approxHamDist.cpp Fft_wak.cpp -o ahd -lfftw3 -lm
 
 Execution :
-./hd text.in pattern.in errorDistance -o optional.out -p plan -c constante_loop 
+./hd text.in pattern.in errorDistance -o optional.out -p plan -c constante_loop
 The pattern/text input file must contain its lenght then the pattern/text
 */
 
@@ -27,13 +27,15 @@ extern "C" {
 
 using namespace std;
 
-// int k_nb_letters = 128;
-int k_nb_letters = 26;
-int LIMIT = 1000;  // size of the output buffer
+int k_nb_letters = 128;
+// int k_nb_letters = 26;
+int LIMIT = 524288;  // size of the output buffer
 
 void Usage() {
 	cout << endl << "How to run: ./exec text pattern error_distance [-o optional_output] ";
-	cout << "[-p plan_to_load] [-c constante_loop]" << endl;
+	cout << "[-p plan_to_load] [-c constante_loop] [-x]" << endl;
+	cout << "The -x option use the Hamming distance algorithm running in ";
+	cout << "O(Sigma n log n)." << endl;
 	cout << "/!\\ The text (or pattern) input file must ";
 	cout << "contain its lenght first, then the text (or pattern)." << endl;
 	cout << "The size of the text is limited to 2^32/2 bits. ";
@@ -71,31 +73,43 @@ void InitTabZeros(int32_t size, int32_t *tab) {
 }
 
 int CharToInt(char letter) {
-	return (int) tolower(letter-97);
+	// return (int) tolower(letter-97);
+	return (int) letter;
 }
 
 char IntToChar(int val) {
-	return (char) val+97;
+	// return (char) val+97;
+	return (char) val;
 }
 
 
-void MapLetters(int size_alphabet, int *map) {
+void MapLetters(int size_alphabet, int size_prime_number, int *prime_numbers, int *map) {
 	struct timespec ts;
 	if (timespec_get(&ts, TIME_UTC) == 0) {
-		couy << "error seed." << endl;
+		cout << "error seed." << endl;
 	}
 	srandom(ts.tv_nsec ^ ts.tv_sec); // compute seed
 
-    for (int i = 0; i < k_nb_letters; ++i)
-        map[i] = random()%size_alphabet;
+	int p = 0;
+	int r;
+	while(p<=size_alphabet){
+		r = random()%size_prime_number;
+		p = prime_numbers[r];
+	}
+	int a = random()%p;
+	int b = random()%p;
+
+	for (int i = 0; i < k_nb_letters; ++i)
+		map[i] = ((a*i + b) % p) % size_alphabet;
 }
 
 char CharMap(char letter, int *map) {
     return IntToChar(map[CharToInt(letter)]);
 }
 
-// Intialise the pattern, size_pattern and size_text  from a file
-void ReadPattern(string file, int32_t *size_pattern, char **pattern) {
+// Initialise a table from a file
+// Used for the pattern
+void ReadCharFile(string file, int32_t *size_pattern, char **pattern) {
 	ifstream file_pattern(file.c_str(), ios::in);
 	char character;
 
@@ -117,7 +131,25 @@ void ReadPattern(string file, int32_t *size_pattern, char **pattern) {
 		cout << "Can't open pattern file." << endl;
 }
 
-bool SortVectofPair(pair<char, int> a, pair<char, int> b) {
+// Initialise a table from a file
+// Used for the prime number table
+void ReadIntFile(string file, int *size, int **table) {
+ifstream stream_file(file.c_str(), ios::in);
+	if (stream_file) {
+		int size_tmp;
+		stream_file >> size_tmp;
+		(*size) = size_tmp;
+
+		(*table) = new int[size_tmp]();
+		for (int32_t i = 0; i < size_tmp; ++i)
+			stream_file >> (*table)[i];
+		stream_file.close();
+	}
+	else
+		cout << "Can't open prime numbers file." << endl;
+}
+
+bool SortVectorOfPair(pair<char, int> a, pair<char, int> b) {
 	return a.first < b.first;
 }
 
@@ -128,12 +160,13 @@ void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
     infreq->clear();
 	for (int32_t i = 0; i < size_pattern; ++i) {
         int current_val = map[CharToInt(pattern[i])];
-        if (infreq[current_val].size() == 0) {
+		if (infreq[current_val].size() == 0) {
 			vector<int32_t> v = {i};
 			infreq[current_val] = v;
 		}
-		else
+		else {
 			infreq[current_val].push_back(i);
+		}
 	}
 	for (int32_t i = 0; i < size_alphabet; ++i) {
 		if (infreq[i].size() >= limit) {
@@ -141,6 +174,25 @@ void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
 			infreq[i].clear();
 		}
 	}
+}
+
+void SortFreqCaract(int32_t size_pattern, char *pattern, float limit,
+						int *map, int size_alphabet, vector<char> *freq) {
+    freq->clear();
+    int *infreq = new int[k_nb_letters]();
+	for (int32_t i = 0; i < size_pattern; ++i) {
+        int current_val = map[CharToInt(pattern[i])];
+		if (infreq[current_val] == 0) {
+			infreq[current_val] = 1;
+			freq->push_back(current_val);
+		}
+	}
+	// cout << endl;
+	// for (int i= 0; i< k_nb_letters; ++i)
+	// 	cout << infreq[i] << " ";
+	// cout << endl;
+
+	delete [] infreq;
 }
 
 bool IsInfreq(char letter, vector<int32_t> *infreq) {
@@ -242,12 +294,14 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &file
 
 
 int main(int argc, char* argv[]) {
-	if (argc < 4) 
+	if (argc < 4) {
 		Usage();
-
+		return 0;
+	}
 	chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
+	mid = start;
 
 
     string file_text = argv[1];
@@ -255,9 +309,13 @@ int main(int argc, char* argv[]) {
     double error_dist = atof(argv[3]);
     string file_out = "out.out";
     int cst_loop = 1;
+	int *prime_numbers;
+	int size_prime_number;
+	ReadIntFile("prime_numbers.txt", &size_prime_number, &prime_numbers);
+	bool HDopt = true;
 
     char c;
-	while((c = getopt(argc, argv, "p:o:c:")) !=EOF) {
+	while((c = getopt(argc, argv, "c:o:p:x")) !=EOF) {
 		switch (c) {
 			case 'c':
 				cst_loop = atoi(optarg);
@@ -267,6 +325,9 @@ int main(int argc, char* argv[]) {
 				break;
 			case 'o':
 				file_out = optarg;
+				break;
+			case 'x':
+				HDopt = false;
 				break;
 			default:
 				Usage();
@@ -278,7 +339,7 @@ int main(int argc, char* argv[]) {
 	char *pattern;
 
 	// Open and read the file containing the pattern
-	ReadPattern(file_pattern, &size_pattern, &pattern);
+	ReadCharFile(file_pattern, &size_pattern, &pattern);
 
 	// Open file containing the text
 	ifstream stream_text(file_text.c_str(), ios::in);
@@ -310,7 +371,6 @@ int main(int argc, char* argv[]) {
 	FFT_wak *fft_tmp = new FFT_wak(size_fft, false);
 	// false indicates that we make a plan for a FFT inverse
 
-
 	// Init size_res : length of the res table which indicates the hamm dist
 	int32_t size_res = size_text - size_pattern + 1;
 	int *tmp_res = new int[size_res]();
@@ -330,61 +390,94 @@ int main(int argc, char* argv[]) {
     vector<char> frequent;
     vector<int32_t> *infrequent = new vector<int32_t>[k_nb_letters];
 
-    int32_t cpt_loop = log2(size_text);
+    int32_t cpt_loop = cst_loop * log2(size_text);
+	// int32_t cpt_loop = 1;
     int *map = new int[k_nb_letters];
-    int size_alphabet = min(2 / error_dist, (double)k_nb_letters);
-    cout << "Mapping on " << size_alphabet << " letters." << endl;
-    cout << "Number of loops: " << cpt_loop << endl;
-    for (int i = 0; i < cst_loop * cpt_loop; ++i) {
-        MapLetters(size_alphabet, map);
+    int size_alphabet = min(round(2 / error_dist), (double)k_nb_letters);
+	if (size_alphabet == k_nb_letters)
+		cpt_loop = 1;
+    // cout << "Mapping on " << size_alphabet << " letters." << endl;
+    cout << "Number of loop iterations: " << cpt_loop << endl;
+
+	end = chrono::system_clock::now();
+	texec = end-mid;
+	// cout << "init : " << texec.count() << "s" << endl;
+	mid= end;
+
+    for (int i = 0; i < cpt_loop; ++i) {
+        MapLetters(size_alphabet, size_prime_number, prime_numbers, map);
 
 
-        cout << "map : ";
-        for (int i = 0; i < k_nb_letters; ++i)
-            cout << "("<< IntToChar(i) << ", " << map[i] << ") ";
-        cout << endl;
+		end = chrono::system_clock::now();
+		texec = end-mid;
+		// cout << endl << "	map letters : " << texec.count() << "s" << endl;
+		mid = end;
 
-        // Sort P's caracteres in frequent/infrequent caractere
-        SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
-                            size_alphabet, &frequent, infrequent);
+		if (HDopt) {
 
-        // cout << "freq : ";
-        // for (int i = 0; i < frequent.size(); i++)
-        // 	cout << frequent[i] << " ";
-        //  cout << endl;
-		//
-        // cout << "infreq : ";
-        // for (int i = 0; i < k_nb_letters; i++)
-        //  	if (infrequent[i].size() > 0)
-        //  	  cout << i << " " << IntToChar(i) << " ";
-        // cout << endl;
+	        // Sort P's caracteres in frequent/infrequent caractere
+	        SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
+	                            size_alphabet, &frequent, infrequent);
 
-	    ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
-				    map, fft_text, fft_pattern, fft_tmp, tmp_res);
+			end = chrono::system_clock::now();
+			texec = end-mid;
+			cout << "	sort freq / infreq : " << texec.count() << "s" << endl;
+			mid = end;
 
-        // cout << "freq : ";
-        // for (int i=0; i < size_res; ++i)
-        //     cout << tmp_res[i] << ", ";
-        // cout << endl;
 
-	    ComputeInfreq(size_text, text, size_res, map, infrequent, tmp_res);
+		    ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
+					    map, fft_text, fft_pattern, fft_tmp, tmp_res);
 
-        // cout << "infreq : ";
-        // for (int i=0; i < size_res; ++i)
-        //     cout << tmp_res[i] << ", ";
-        // cout << endl;
+			end = chrono::system_clock::now();
+			texec = end-mid;
+			cout << "	freq : " << texec.count() << "s		nb freq :" << frequent.size() << endl;
+			mid = end;
+
+		    ComputeInfreq(size_text, text, size_res, map, infrequent, tmp_res);
+
+			end = chrono::system_clock::now();
+			texec = end-mid;
+			cout << "	infreq : " << texec.count() << "s" << endl;
+			mid= end;
+
+		}
+		else {
+			// Put all characters in freq vector
+	        SortFreqCaract(size_pattern, pattern, threshold_freq, map,
+	                            size_alphabet, &frequent);
+
+			end = chrono::system_clock::now();
+			texec = end-mid;
+			cout << "	sort freq / infreq : " << texec.count() << "s" << endl;
+			mid = end;
+
+
+		    ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
+					    map, fft_text, fft_pattern, fft_tmp, tmp_res);
+
+			end = chrono::system_clock::now();
+			texec = end-mid;
+			cout << "	freq : " << texec.count() << "s		nb freq :" << frequent.size() << endl;
+			mid = end;
+		}
+
 
         KeepSmaller(size_res, tmp_res, res);
-    }
 
-	// cout << "res final : ";
-	// for (int i=0; i < size_res; ++i)
-	// 	cout << res[i] << ", ";
-	// cout << endl;
+		end = chrono::system_clock::now();
+		texec = end-mid;
+		// cout << "	res : " << texec.count() << "s" << endl;
+		mid= end;
+    }
 
 	// Write in output file
 	cout << "Writing results in output file: " << file_out << endl;
 	WriteOuput(size_pattern, size_res, res, stream_out);
+
+	end = chrono::system_clock::now();
+	texec = end-mid;
+	cout << "write output : " << texec.count() << "s" << endl;
+	mid= end;
 
 	stream_text.close();
 	stream_out.close();
@@ -395,7 +488,7 @@ int main(int argc, char* argv[]) {
 
 	delete fft_pattern;
 	delete fft_text;
-	delete fft_tmp;
+	// delete fft_tmp;
 
 	end = chrono::system_clock::now();
     texec = end-start;

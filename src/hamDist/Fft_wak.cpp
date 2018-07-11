@@ -39,7 +39,7 @@ FFT_wak::FFT_wak(unsigned int size, bool s) {
 
 FFT_wak::~FFT_wak() {
 	delete [] polynome_;
-	fftw_free(fft_str_);
+	// fftw_free(fft_str_);
 	fftw_destroy_plan(plan_);
 }
 
