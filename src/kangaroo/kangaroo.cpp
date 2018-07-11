@@ -1,5 +1,11 @@
 /*
-Author : https://www.geeksforgeeks.org/%C2%AD%C2%ADkasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
+Authors : Tatiana Rocher (kangaroo algorithm) & geeksforgeeks.org (SA, LCP, LU building et query)
+SA &  LCP : https://www.geeksforgeeks.org/%C2%AD%C2%ADkasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
+
+
+Compilation : g++ -std=c++11 kangaroo.cpp -o kangaroo
+Execution : ./exec text pattern nb_errors -o optionalOutput
+
 */
 
 
@@ -74,7 +80,7 @@ int cmp(struct suffix a, struct suffix b) {
 
 // This is the main function that takes a string 'txt' of size n as an
 // argument, builds and return the suffix array for the given string
-void BuildSuffixArray(char* txt, int size_suff_array, int** suff_array) {
+void BuildSuffixArray(char *txt, int size_suff_array, int** suff_array) {
     // A structure to store suffixes and their indexes
     // struct suffix suffixes[size_suff_array];
     suffix *suffixes = new suffix[size_suff_array]();
@@ -136,6 +142,7 @@ void BuildSuffixArray(char* txt, int size_suff_array, int** suff_array) {
     // Store indexes of all sorted suffixes in the suffix array
     for (int i = 0; i < size_suff_array; i++)
         (*suff_array)[i] = suffixes[i].index;
+
 }
 
 void BuildInvSuffArray(int32_t size_suff_array, int* suff_array,
@@ -227,18 +234,25 @@ void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
         current_pos_t = i;
         current_nb_error = 0;
         while (current_nb_error < nb_error_max) {
-                start = inv_suff_array[current_pos_t];
-                end = inv_suff_array[current_pos_p+size_text];
-                pas = Query(lcp, lu, min(start, end), max(start, end)-1);
-                current_pos_t += pas+1;
-                current_pos_p += pas+1;
-                if (current_pos_p > size_pattern)
-                    break;
-                current_nb_error++;
+            // cout << "err : " << current_nb_error << endl;
+            start = inv_suff_array[current_pos_t];
+            end = inv_suff_array[current_pos_p+size_text];
+            // cout << start << " " << end ;
+            pas = Query(lcp, lu, min(start, end), max(start, end)-1);
+            // cout << "   pas " << pas << endl;
+            current_pos_t += pas+1;
+            current_pos_p += pas+1;
+            // cout << "current " << current_pos_t << " " << current_pos_p << endl;
+            // cout << "size P " << size_pattern << endl;
+            if (current_pos_p >= size_pattern)
+                break;
+            current_nb_error++;
         }
 
         if (current_pos_p < size_pattern)
             res[i] = -1;
+        else if (current_pos_p == size_pattern)
+            res[i] = current_nb_error+1;
         else
             res[i] = current_nb_error;
         // cout << "error : " << res[i] << endl << endl;
@@ -340,7 +354,7 @@ int main(int argc, char* argv[]) {
 
     vector<int> *lu = new vector<int>[size_suff_array]();
     BuildLU(lcp, size_suff_array, lu);
-    // cout << "LU Array : " << endl;
+    cout << "LU Array : " << endl;
     // for (int i=0; i<size_suff_array; ++i) {
     //     for (int j=0; j<lu[i].size(); ++j)
     //         cout << lu[i][j] << " ";

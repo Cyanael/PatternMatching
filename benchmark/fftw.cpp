@@ -2,7 +2,7 @@
 Author: Tatiana Rocher tatiana.rocher@gmail.com
 
 Test the FFT execution of FFTW library,
-using the plan fftw_plan_dft_r2c_1d 
+using the plan fftw_plan_dft_r2c_1d
 Only the FFT's creation, from the double tab to the real tab, is considered
 */
 
@@ -13,12 +13,12 @@ Only the FFT's creation, from the double tab to the real tab, is considered
 #include <stdint.h>
 #include <fstream>
 #include <math.h>
-#include <ctime> 
+#include <ctime>
 #include <chrono>
 
-extern "C"{	
-	#include "../fftw-3.3.7/api/fftw3.h"
-}	 
+extern "C"{
+	#include "../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
+}
 
 using namespace std;
 
@@ -35,7 +35,15 @@ int UpperPowOfTwo(int32_t val) {
 
 int main(int argc, char* argv[]) {
 	if (argc < 2)
-		cout << "Usage : ./exec textFile" << endl;
+		cout << "Usage : ./exec textFile plan" << endl;
+
+	if (argc>2) {
+		int res = fftw_import_wisdom_from_filename(argv[2]);
+		if (res != 0)
+		cout << "Loading plans from " << argv[2] << " succeed."<< endl;
+		else
+		cout << "Error while loading plans from " << argv[2] << endl;
+	}
 
 	string file_text = argv[1];
 	ifstream stream_text(file_text.c_str(), ios::in);
@@ -48,14 +56,14 @@ int main(int argc, char* argv[]) {
 	int size_text, size_ffts;
 	stream_text >> size_text;
 	size_ffts = UpperPowOfTwo(size_text);
-	
+
 	double *text = new double[size_ffts]();
 
+	// fftw_import_wisdom_from_filename("../src/saveFfts/up_to_22_pat.plan");
 	fftw_complex *fft_text;
 	fftw_plan plan_text;
 	fft_text = (fftw_complex*) fftw_malloc(sizeof(fftw_complex)*(size_ffts/2+1));
 	plan_text = fftw_plan_dft_r2c_1d(size_ffts, text, fft_text, FFTW_ESTIMATE);
-
 
 	for (int32_t i = 0; i < size_text; i++) {
 		stream_text >> text[i];

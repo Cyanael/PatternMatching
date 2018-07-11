@@ -1,6 +1,9 @@
 // Author : Bogdan Manghiuc
 // Modified by Tatiana Rocher
 
+// From the paper: Clifford, R., Fontaine A., Porat E., Sach B., Starikovskaya T. (2016)
+// The k-mismatch problem revisited In Proceedings of the twenty-seventh annual
+// ACM-SIAM symposium on Discrete algorithms (p 2039-2052)
 
 // Algorithm that solves an instance of the k-mismatch problem when the pattern (P)
 // has approximate period l <= k
@@ -145,7 +148,7 @@ void readPattern(string in2, string &pattern, int &k){
   k = atoi(k_str.c_str());
 
   pattern_size = (int) pattern.size();
-  
+
   filePattern.close();
 }
 
@@ -689,7 +692,7 @@ cout << argc << endl;
     freopen(argv[3], "w", stdout);
   else
     freopen("k-mismatch.out", "w", stdout);
-  
+
 // approximate period is 0 after this step if it is > k;
   find_approximate_period(pattern, k);
 
@@ -725,7 +728,7 @@ cout << argc << endl;
 //  print_position_delta_hamming();
 //  print_i();
 
-  close (stdout);
+  fclose(stdout);
 
   return 0;
 }

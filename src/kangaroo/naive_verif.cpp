@@ -49,20 +49,20 @@ int main(int argc, char* argv[]){
 		text.push_back(d);
 	}
 
+	end = chrono::system_clock::now();
+    texec = end-start;
+    cout << "Init time : " << texec.count() << "s" << endl;
+
 	n = n-m;
-	char p, t;
+	char p, t, d;
 	int res;
 	int i;
 
 	while(n>=0){
-	int j=0;
 		res = 0;
 		i = 0;
 		while (res < error_max && i < m) {
-		// for (int i=0; i<m; i++){
-			p = pattern[i];
-			t = text[i];
-			if (p!=t){
+			if (pattern[i]!=text[i]){
 				res++;
 			}
 			i++;
@@ -73,11 +73,9 @@ int main(int argc, char* argv[]){
 			fileOut << res << endl;
 
 		text.erase(text.begin(), text.begin()+1);
-		char d;
 		fileText >> d;
 		text.push_back(d);
 		n--;
-		j++;
 	}
 
 	end = chrono::system_clock::now();
