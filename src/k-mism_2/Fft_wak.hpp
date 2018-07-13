@@ -1,13 +1,5 @@
 /* Copyright : ???
 Author : Tatiana Rocher, tatiana.rocher@gmail.com 
-
-Compilation :
-install the fftw3 library
-g++ -std=c++11 hamDist.cpp Fft_wak.cpp -o hd -lfftw3 -lm
-
-Execution :
-./hd text.in pattern.in optional.out
-The pattern/text input file must contain its lenght then the pattern/text
 */
 
 #ifndef FFT_WAK_H

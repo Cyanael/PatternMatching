@@ -5,12 +5,12 @@ This file contains the Hamming distance algorithm
 used when there is at most 2*sqrt(k) frequent symbols.
 */
 
+#include <unistd.h>
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <cstdint>
 #include <chrono>
-#include <unistd.h>
 
 extern "C" {
 	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
@@ -71,10 +71,11 @@ void ReversePattern(int32_t size, FFT_wak *fft_pattern) {
 	}
 }
 
-void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, int32_t limit,
-						vector<char> *freq, vector<int32_t> *infreq, int size_alphabet) {
+void SortfreqInfreqCaract(int32_t size_pattern, char *pattern,
+						float threshold_freq, vector<char> *freq,
+						vector<int32_t> *infreq, int size_alphabet) {
 	for (int32_t i = 0; i < size_alphabet; ++i) {
-		if (infreq[i].size() >= limit) {
+		if (infreq[i].size() >= threshold_freq) {
 			freq->push_back(IntToChar(i));
 			infreq[i].clear();
 		}
@@ -100,7 +101,7 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 		end = chrono::system_clock::now();
 		texec = end-mid;
 		cout << "	bit vect : " << texec.count() << "s" << endl;
-		mid= end;
+		mid = end;
 
 		ReversePattern(size_pattern, fft_pattern);
 		fft_text->ExecFFT();
@@ -128,18 +129,18 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 			texec = end-mid;
 			cout << "	write res : " << texec.count() << "s" << endl;
 			mid = end;
-
 	}
 }
 
 void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 				vector<int32_t> *infreq, int *res) {
-	char current_char;
+	int current_char;
 	for (int32_t i = 0; i < size_text; ++i) {
 		if (IsInfreq(text[i], infreq)) {
 			current_char = CharToInt(text[i]);
 			for (int32_t j = 0; j < infreq[current_char].size(); ++j) {
-				if (i >= infreq[current_char][j]) {
+				if (i >= infreq[current_char][j]
+					&& i - infreq[current_char][j] < size_res) {
 					res[i-infreq[current_char][j]]++;
 				}
 			}
@@ -148,55 +149,54 @@ void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 }
 
 
-void ComputeHD(int32_t size_text, char *text, int32_t size_pattern, 
-						char *pattern, vector<int32_t> *infrequent, float threshold_freq, 
+void ComputeHD(int32_t size_text, char *text, int32_t size_pattern,
+						char *pattern, vector<int32_t> *infrequent, float threshold_freq,
 						int size_alphabet, int32_t size_res, int *res) {
-
-	chrono::time_point<chrono::system_clock> start, mid, end;
+    chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
 
 	// Init size_fft: the lenght used for the FFTs
 	// It is a power of 2 (see FFTW documentation)
-	int32_t size_fft = UpperPowOfTwo(size_text);
+    int32_t size_fft = UpperPowOfTwo(size_text);
 
 	// Initialise the fftw_plan. Should be done before initialising the in/output
-	FFT_wak *fft_text = new FFT_wak(size_fft);
-	FFT_wak *fft_pattern = new FFT_wak(size_fft);
-	FFT_wak *fft_tmp = new FFT_wak(size_fft, false);
+    FFT_wak *fft_text = new FFT_wak(size_fft);
+    FFT_wak *fft_pattern = new FFT_wak(size_fft);
+    FFT_wak *fft_tmp = new FFT_wak(size_fft, false);
 	// false indicates that we make a plan for a FFT inverse
 
-	vector<char> frequent;
+    vector<char> frequent;
 
-	SortfreqInfreqCaract(size_pattern, pattern, threshold_freq,
+    SortfreqInfreqCaract(size_pattern, pattern, threshold_freq,
 						&frequent, infrequent, size_alphabet);
 
 
     cout << "freq " << frequent.size() << " : ";
     for (int i = 0; i < frequent.size(); i++)
-     	cout << frequent[i] << " ";
-     cout << endl;
+        cout << frequent[i] << " ";
+    cout << endl;
 
-	ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
+    ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
 				fft_text, fft_pattern, fft_tmp, res);
 
-	end = chrono::system_clock::now();
-	texec = end-mid;
-	cout << "total freq : " << texec.count() << "s" << endl;
-	mid= end;
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "total freq : " << texec.count() << "s" << endl;
+    mid = end;
 
-	ComputeInfreq(size_text, text, size_res, infrequent, res);
+    ComputeInfreq(size_text, text, size_res, infrequent, res);
 
-	end = chrono::system_clock::now();
-	texec = end-mid;
-	cout << "total infreq : " << texec.count() << "s" << endl;
-	mid = end;
-	texec = end-start;
-	cout << endl << "Total algorithm : " << texec.count() <<"s" << endl << endl;
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "total infreq : " << texec.count() << "s" << endl;
+    mid = end;
+    texec = end-start;
+    cout << endl << "Total algorithm : " << texec.count() <<"s" << endl << endl;
 
 
-	delete [] infrequent;
-	delete fft_pattern;
-	delete fft_text;
-	// delete fft_tmp;
+    delete [] infrequent;
+    delete fft_pattern;
+    delete fft_text;
+    // delete fft_tmp;
 }

@@ -1,5 +1,5 @@
 CXX=		g++
-CXXFLAGS=	-O3 -std=c++11 
+CXXFLAGS=	-std=c++11 -g
 PROG=		k-mism
 LIBS=		-lfftw3 -lm
 
@@ -21,4 +21,4 @@ clean:
 	rm -rf *.o
 
 mrproper: clean
-	rm -rf hello
+	rm -rf k-mism

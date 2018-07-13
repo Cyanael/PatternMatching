@@ -26,7 +26,7 @@ struct suffix {
 void ConcatTextPattern(int32_t size_text, char *text, int32_t size_pattern,
                         char *pattern, char **text_pattern) {
     (*text_pattern) = new char[size_text + size_pattern]();
-    for (int32_t i = 0; i < size_text; ++i) 
+    for (int32_t i = 0; i < size_text; ++i)
         (*text_pattern)[i] = text[i];
     for (int32_t i = 0; i < size_pattern; ++i)
         (*text_pattern)[size_text + i] = pattern[i];
@@ -104,7 +104,6 @@ void BuildSuffixArray(char *txt, int size_suff_array, int** suff_array) {
     // Store indexes of all sorted suffixes in the suffix array
     for (int i = 0; i < size_suff_array; i++)
         (*suff_array)[i] = suffixes[i].index;
-
 }
 
 void BuildInvSuffArray(int32_t size_suff_array, int* suff_array,
@@ -175,7 +174,7 @@ void BuildLU(int* lcp, int32_t size_suff_array, vector<int> *lu) {
 
 // Returns minimum of arr[L..R]
 int Query(int* lcp, vector<int>* lu, int pos_start, int pos_end) {
-    int j = (int)log2(pos_end-pos_start+1);
+    int j = floor(log2(pos_end-pos_start+1));
 
     if (lcp[lu[pos_start][j]] <= lcp[lu[pos_end - (1 << j) + 1][j]])
         return lcp[lu[pos_start][j]];
@@ -199,16 +198,11 @@ void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
             current_pos_t = i;
             current_nb_error = 0;
             while (current_nb_error < nb_error_max) {
-                // cout << "err : " << current_nb_error << endl;
                 start = inv_suff_array[current_pos_t];
                 end = inv_suff_array[current_pos_p+size_text];
-                // cout << start << " " << end ;
                 pas = Query(lcp, lu, min(start, end), max(start, end)-1);
-                // cout << "   pas " << pas << endl;
                 current_pos_t += pas+1;
                 current_pos_p += pas+1;
-                // cout << "current " << current_pos_t << " " << current_pos_p << endl;
-                // cout << "size P " << size_pattern << endl;
                 if (current_pos_p >= size_pattern)
                     break;
                 current_nb_error++;
@@ -233,60 +227,48 @@ bool IsFreq(char letter, vector<int32_t> *freqChar) {
 }
 
 
-void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float threshold_freq,
-                            vector<int32_t> *infreq, int size_alphabet) {
-    int nb_char_selected = 0, i=0;
-    cout << "Sorted ";
-    for (int i=0; i<size_alphabet; ++i)
-        if (infreq[i].size() != 0)
-            cout << "(" << i << ", " << infreq[i].size() << ") ";
-    cout << endl;
+void SortfreqInfreqCaract(int32_t size_pattern, char *pattern,
+                        float threshold_freq, vector<int32_t> *infreq,
+                        int size_alphabet) {
+    int nb_char_selected = 0, i = 0;
 
     for (int i= 0; i< size_alphabet; ++i) {
-        if (infreq[i].size() >= threshold_freq && nb_char_selected < 2*threshold_freq) {
-            infreq[i].erase(infreq[i].begin()+ceil(threshold_freq), infreq[i].end());
-            nb_char_selected++;    
-        }
-        else
+        if (infreq[i].size() >= threshold_freq &&
+            nb_char_selected < 2*threshold_freq) {
+            infreq[i].erase(infreq[i].begin() + ceil(threshold_freq),
+                            infreq[i].end());
+            nb_char_selected++;
+        } else
             infreq[i].clear();
     }
-    cout << "Freq ";
-    for (int i=0; i<size_alphabet; ++i)
-        if (infreq[i].size() != 0)
-            cout << "(" << i << ", " << infreq[i].size() << ") ";
-    cout << endl;
 }
 
-void InterestingPosition(int32_t size_text, char *text, vector<int32_t> *freqChar,
-                        float threshold_freq, int *dk) {
+void InterestingPosition(int32_t size_text, char *text,
+                        vector<int32_t> *freqChar, float threshold_freq,
+                        int *dk) {
 int pos_in_pat;
-    for (int i=0; i<size_text; ++i) {
-        // cout << i << " " << text[i] << " " << IsFreq(text[i], freqChar) << endl;
+    for (int i = 0; i < size_text; ++i) {
         if (IsFreq(text[i], freqChar))
-            for (int j=0; j< freqChar[CharToInt(text[i])].size() ; ++j) {
-                pos_in_pat =freqChar[CharToInt(text[i])][j]; 
-                // cout << pos_in_pat;
+            for (int j = 0; j < freqChar[CharToInt(text[i])].size() ; ++j) {
+                pos_in_pat = freqChar[CharToInt(text[i])][j];
                 if (i - pos_in_pat >=0) {
                     dk[i - pos_in_pat]++;
-                    // cout << " dk[" << i - pos_in_pat << "]++";
                 }
-                // cout << endl;
             }
     }
 }
 
 
-void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern, 
-                        char *pattern, vector<int32_t> *freqChar, 
+void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
+                        char *pattern, vector<int32_t> *freqChar,
                         float threshold_freq, int size_alphabet,
-                        int nb_error_max, int32_t size_res, int *res){
-
+                        int nb_error_max, int32_t size_res, int *res) {
     chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec, tinit;
     start = chrono::system_clock::now();
 
-    SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, freqChar, size_alphabet);
-
+    SortfreqInfreqCaract(size_pattern, pattern, threshold_freq,
+                        freqChar, size_alphabet);
 
     char *text_pattern;
     ConcatTextPattern(size_text, text, size_pattern, pattern, &text_pattern);
@@ -294,39 +276,36 @@ void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
     int32_t size_suff_array = size_text+size_pattern;
     int *suff_array = new int[size_suff_array]();
     int *inv_suff_array = new int[size_suff_array]();
+
     end = chrono::system_clock::now();
     texec = end-start;
     cout << "   Text-Pattern : " << texec.count() << endl;
     mid = end;
+
     BuildSuffixArray(text_pattern, size_suff_array, &suff_array);
+
     end = chrono::system_clock::now();
     texec = end-mid;
     cout << "   SA : " << texec.count() << endl;
     mid = end;
+
     BuildInvSuffArray(size_suff_array, suff_array, &inv_suff_array);
+
     end = chrono::system_clock::now();
     texec = end-mid;
     cout << "   ISA : " << texec.count() << endl;
     mid = end;
+
     int *lcp = new int[size_suff_array]();
     Kasai(text_pattern, size_suff_array, suff_array, &lcp, inv_suff_array);
     end = chrono::system_clock::now();
     texec = end-mid;
     cout << "   LCP : " << texec.count() << endl;
     mid = end;
-    // cout << "Suffix Array : \n";
-    // printArr(suff_array, size_suff_array);
-    // cout << "LCP Array : \n";
-    // printArr(lcp, size_suff_array);
 
     vector<int> *lu = new vector<int>[size_suff_array]();
     BuildLU(lcp, size_suff_array, lu);
-    // cout << "LU Array : " << endl;
-    // for (int i=0; i<size_suff_array; ++i) {
-    //     for (int j=0; j<lu[i].size(); ++j)
-    //         cout << lu[i][j] << " ";
-    //     cout << endl;
-    // }
+
     end = chrono::system_clock::now();
     texec = end-mid;
     cout << "   LU : " << texec.count() << endl;
@@ -339,15 +318,7 @@ void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
 
     int *dk = new int[size_res]();
     InterestingPosition(size_text, text, freqChar, threshold_freq, dk);
-    for (int i = 0; i < size_res; ++i)
-        cout << dk[i] << " ";
-    cout << endl;
 
-    Kangaroo(size_text, size_pattern, size_suff_array, inv_suff_array, lcp, 
+    Kangaroo(size_text, size_pattern, size_suff_array, inv_suff_array, lcp,
                 lu, size_res, nb_error_max, dk, res);
-
-    cout << "Res : " ;
-    for (int i=0; i<size_res; ++i)
-        cout << res[i] << " ";
-    cout << endl;
 }

@@ -24,19 +24,9 @@ extern "C" {
 using namespace std;
 
 
-
 int UpperPowOfTwo(int val);
 
 void InitTabZeros(int32_t size, int32_t *tab);
-
-int CharToInt(char letter);
-
-char IntToChar(int val);
-
-
-void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
-						vector<char> *freq, vector<int32_t> *infreq);
-
 
 bool IsInfreq(char letter, vector<int32_t> *infreq);
 
@@ -47,7 +37,10 @@ void MatchLetterText(int32_t size, char *text, char letter,
 
 void ReversePattern(int32_t size, FFT_wak *fft_pattern);
 
-void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, int32_t limit,
+// input : infreq contains the occurences of all pattern letters
+// separate the frequent charaters in freq
+// and the infreq characters and theirs occurences in infreq
+void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float threshold_freq,
 						vector<char> *freq, vector<int32_t> *infreq, int size_alphabet);
 
 void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,

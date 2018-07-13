@@ -1,13 +1,5 @@
 /* Copyright : ???
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
-
-Compilation :
-install the fftw3 library
-g++ -std=c++11 hamDist.cpp Fft_wak.cpp -o hd -lfftw3 -lm
-
-Execution :
-./hd text.in pattern.in optional.out
-The pattern/text input file must contain its lenght then the pattern/text
 */
 
 #include <math.h>
@@ -18,7 +10,7 @@ The pattern/text input file must contain its lenght then the pattern/text
 
 FFT_wak::FFT_wak(unsigned int size) {
 	size_ = size;
-	polynome_ = (double *) malloc(size*sizeof(double));
+	polynome_ = new double[size];
 	fft_str_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex)*(size/2+1));
 	plan_ = fftw_plan_dft_r2c_1d(size_, polynome_, fft_str_, FFTW_ESTIMATE);
 	signe_ = true;
@@ -28,7 +20,7 @@ FFT_wak::FFT_wak(unsigned int size) {
 FFT_wak::FFT_wak(unsigned int size, bool s) {
 	size_ = size;
 	signe_ = s;
-	polynome_ = (double *) malloc(size*sizeof(double));
+	polynome_ = new double[size];
 	fft_str_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex)*(size/2+1));
 	if (s == true)
 		plan_ = fftw_plan_dft_r2c_1d(size_, polynome_, fft_str_, FFTW_ESTIMATE);
@@ -39,7 +31,7 @@ FFT_wak::FFT_wak(unsigned int size, bool s) {
 
 FFT_wak::~FFT_wak() {
 	delete [] polynome_;
-	// fftw_free(fft_str_);
+	fftw_free(fft_str_);
 	fftw_destroy_plan(plan_);
 }
 

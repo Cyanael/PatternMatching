@@ -1,6 +1,9 @@
 #ifndef LCP_HPP
 #define LCP_HPP
 
+#include <vector>
+#include <algorithm>
+
 using namespace std;
 
 

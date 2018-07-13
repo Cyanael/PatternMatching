@@ -10,6 +10,7 @@ Execution :
 The pattern/text input file must contain its lenght then the pattern/text
 */
 
+#include <unistd.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -17,12 +18,10 @@ The pattern/text input file must contain its lenght then the pattern/text
 #include <cassert>
 #include <cstdint>
 #include <chrono>
-#include <unistd.h>
 
 
 #include "HammingDistance.hpp"
 #include "LCP.hpp"
-#include "Tools.hpp"
 
 using namespace std;
 
@@ -43,7 +42,7 @@ bool Usage() {
 }
 
 void LoadSavedPlan(char* file) {
-	int res=0;
+	int res = 0;
 	res = fftw_import_wisdom_from_filename(file);
 	if (res != 0)
 		cout << "Loading plans from " << file << " succeed."<< endl;
@@ -83,13 +82,13 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, bool isHD,
 	for (int32_t i = 0; i < size_res; ++i) {
 		if (isHD) {
 			if (size_pattern - res[i] > error_k)
-				res_i_str = 'N';
+				res_i_str = to_string(-1);
 			else
 				res_i_str = to_string(size_pattern - res[i]);
 		}
 		else {
 		    if (res[i] == -1)
-		    	res_i_str = 'N';
+		    	res_i_str = to_string(-1);
 		    else
 		    	res_i_str = to_string(res[i]);
 		}
@@ -99,7 +98,7 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, bool isHD,
         	buffer.resize(0);
     	}
     	buffer.append(res_i_str);
-    	buffer.append(" ");
+    	buffer.append("\n");
 		}
 	stream_out << buffer;
 }
@@ -113,7 +112,7 @@ int SortCaract(int32_t size_pattern, char *pattern, int32_t threshold_freq,
 			vector<int32_t> v = {i};
 			sortedChar[CharToInt(pattern[i])] = v;
 		}
-		else
+		else 
 			sortedChar[CharToInt(pattern[i])].push_back(i);
 	}
 	int freqChar = 0;
@@ -177,7 +176,7 @@ int main(int argc, char* argv[]) {
 	end = chrono::system_clock::now();
 	texec = end-start;
 	cout << "Init vectors : " << texec.count() << "s" << endl;
-	mid= end;
+	mid = end;
 
 
 
@@ -189,7 +188,7 @@ int main(int argc, char* argv[]) {
 	end = chrono::system_clock::now();
 	texec = end-start;
 	cout << "Init ffts : " << texec.count() << "s" << endl;
-	mid= end;
+	mid = end;
 
 	int freqChar = SortCaract(size_pattern, pattern, threshold_freq, sortedChar);
 
@@ -197,15 +196,14 @@ int main(int argc, char* argv[]) {
 	 end = chrono::system_clock::now();
 	 texec = end-mid;
 	 cout << "sort freq infreq : " << texec.count() << "s" << endl;
-	 mid= end;
+	 mid = end;
 
 	// Chose between the Hamming Distance algorithm or kangaroo algorithm
-	cout << "Threshold = " << threshold_freq << endl;
 	bool isHD = true;
-	if (freqChar < 2*threshold_freq)
+	if (freqChar < 2*threshold_freq) {
 		ComputeHD(size_text, text, size_pattern, pattern,
 						sortedChar, threshold_freq, k_nb_letters, size_res, res);
-	else {
+	} else {
 		ComputeLCP(size_text, text, size_pattern, pattern,
 						sortedChar, threshold_freq, k_nb_letters, error_k, size_res, res);
 		isHD = false;
@@ -214,7 +212,7 @@ int main(int argc, char* argv[]) {
 	end = chrono::system_clock::now();
 	texec = end-start;
 	cout << "Computation : " << texec.count() << "s" << endl;
-	mid= end;
+	mid = end;
 
 	// Write in output file
 	cout << "Writing results in output file: " << file_out << endl;
@@ -226,11 +224,11 @@ int main(int argc, char* argv[]) {
 	mid = end;
 
 	// stream_text.close();
-	stream_out.close();
+    stream_out.close();
 
-	delete [] text;
-	delete [] pattern;
-	delete [] res;
+    delete [] text;
+    delete [] pattern;
+    delete [] res;
 
 
 	end = chrono::system_clock::now();
@@ -239,5 +237,5 @@ int main(int argc, char* argv[]) {
     texec = end-start;
     cout << endl << "Total time : " << texec.count() << "s" << endl;
 
-	return 0;
+    return 0;
 }
