@@ -68,7 +68,7 @@ int main(int argc, char* argv[]){
 			i++;
 		}
 		if (res >= error_max)
-			fileOut << "N" << endl;
+			fileOut << "-1" << endl;
 		else
 			fileOut << res << endl;
 

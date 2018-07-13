@@ -265,9 +265,6 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res,
     buffer.reserve(LIMIT);
     string res_i_str;
     for (int32_t i = 0; i < size_res; ++i) {
-        if (res[i] == -1)
-            res_i_str = "N";
-        else
             res_i_str = to_string(res[i]);
         if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
             file_out << buffer;
