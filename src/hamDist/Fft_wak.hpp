@@ -18,10 +18,6 @@ extern "C" {
 	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
 }
 
-using std::cout;
-using std::endl;
-
-
 class FFT_wak{
  private:
 	unsigned int size_;
@@ -54,4 +50,4 @@ class FFT_wak{
 	void fftToString() const;
 };
 
-#endif  // FFT_WAK_K
+#endif  // FFT_WAK_H
