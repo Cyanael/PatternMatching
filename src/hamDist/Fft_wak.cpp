@@ -15,6 +15,7 @@ The pattern/text input file must contain its lenght then the pattern/text
 
 #include "Fft_wak.hpp"
 
+using namespace std;
 
 FFT_wak::FFT_wak(unsigned int size) {
 	size_ = size;
@@ -23,7 +24,6 @@ FFT_wak::FFT_wak(unsigned int size) {
 	plan_ = fftw_plan_dft_r2c_1d(size_, polynome_, fft_str_, FFTW_ESTIMATE);
 	signe_ = true;
 }
-
 
 FFT_wak::FFT_wak(unsigned int size, bool s) {
 	size_ = size;
@@ -36,13 +36,11 @@ FFT_wak::FFT_wak(unsigned int size, bool s) {
 		plan_ = fftw_plan_dft_c2r_1d(size_, fft_str_, polynome_, FFTW_ESTIMATE);
 }
 
-
 FFT_wak::~FFT_wak() {
 	delete [] polynome_;
 	fftw_free(fft_str_);
 	fftw_destroy_plan(plan_);
 }
-
 
 void FFT_wak::FFTMultiplication(FFT_wak *a, FFT_wak *b) {
 	for (unsigned int i = 0; i < size_/2+1; i++) {
@@ -53,7 +51,6 @@ void FFT_wak::FFTMultiplication(FFT_wak *a, FFT_wak *b) {
 	}
 }
 
-
 void FFT_wak::Rounding() {
 	double threshold = 0.001;
 	// Under this threshold, we assume that the computing made approximation errors
@@ -62,7 +59,6 @@ void FFT_wak::Rounding() {
 			polynome_[i] = 0;
 	}
 }
-
 
 void FFT_wak::ExecFFT() {
 	fftw_execute(plan_);

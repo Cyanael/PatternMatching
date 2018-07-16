@@ -27,7 +27,6 @@ extern "C" {
 
 using namespace std;
 
-// int NBLETTER = 26;
 int k_nb_letters = 128;
 int LIMIT = 1048576;  // size of the output buffer
 
@@ -43,9 +42,7 @@ bool Usage() {
 }
 
 void LoadSavedPlan(char* file) {
-	// string fft_file = "../saveFfts/fft_patient_2pow18to20.txt";
 	int res=0;
-	// res = fftw_import_wisdom_from_filename(fft_file.c_str());
 	res = fftw_import_wisdom_from_filename(file);
 	if (res != 0)
 		cout << "Loading plans from " << file << " succeed."<< endl;
@@ -118,7 +115,6 @@ void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
 	}
 }
 
-
 bool IsInfreq(char letter, vector<int32_t> *infreq) {
 	if (infreq[CharToInt(letter)].size() > 0)
 		return true;
@@ -141,7 +137,6 @@ void MatchLetterText(int32_t size, char *text, char letter,
 	}
 }
 
-
 void ReversePattern(int32_t size, FFT_wak *fft_pattern) {
 	double tmp;
 	for (int32_t i = 0; i < size/2; ++i) {
@@ -150,7 +145,6 @@ void ReversePattern(int32_t size, FFT_wak *fft_pattern) {
 		fft_pattern->setVal(size-i-1, tmp);
 	}
 }
-
 
 void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 				char *text, char *pattern, vector<char> *frequent,
@@ -198,7 +192,6 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 			texec = end-mid;
 			cout << "	write res : " << texec.count() << "s" << endl;
 			mid = end;
-
 	}
 }
 
@@ -209,7 +202,8 @@ void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 		if (IsInfreq(text[i], infreq)) {
 			current_char = CharToInt(text[i]);
 			for (int32_t j = 0; j < infreq[current_char].size(); ++j) {
-				if (i >= infreq[current_char][j]) {
+				if (i >= infreq[current_char][j]
+				&& i - infreq[current_char][j] < size_res) {
 					res[i-infreq[current_char][j]]++;
 				}
 			}
@@ -234,7 +228,6 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, ofstream &stre
 		}
 	stream_out << buffer;
 }
-
 
 
 int main(int argc, char* argv[]) {
@@ -265,7 +258,6 @@ int main(int argc, char* argv[]) {
 	chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
-
 
 	int32_t size_pattern, size_text;
 	char *pattern;
@@ -328,12 +320,6 @@ int main(int argc, char* argv[]) {
 	 cout << "sort freq infreq : " << texec.count() << "s" << endl;
 	 mid= end;
 
-    // cout << "infreq : ";
-    // for (int i = 0; i < k_nb_letters; i++)
-    //  	// if (infrequent[i].size() > 0)
-	//      	cout << i << " " << IntToChar(i) << " ";
-    //  cout << endl;
-
 	// Init size_res : length of the res table which indicates the hamm dist
 	int32_t size_res = size_text - size_pattern + 1;
 	int *res = new int[size_res]();
@@ -382,11 +368,14 @@ int main(int argc, char* argv[]) {
 	delete [] text;
 	delete [] pattern;
 	delete [] res;
+	frequent.clear();
+	for (int i=0; i<k_nb_letters; ++i)
+		infrequent[i].clear();
 	delete [] infrequent;
 
 	delete fft_pattern;
 	delete fft_text;
-	// delete fft_tmp;
+	delete fft_tmp;
 
 	end = chrono::system_clock::now();
     texec = end-mid;
