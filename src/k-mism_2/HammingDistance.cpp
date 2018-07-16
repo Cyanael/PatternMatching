@@ -1,7 +1,7 @@
 /* Copyright : ???
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
-This file contains the Hamming distance algorithm 
+This file contains the Hamming distance algorithm
 used when there is at most 2*sqrt(k) frequent symbols.
 */
 
@@ -81,7 +81,6 @@ void SortfreqInfreqCaract(int32_t size_pattern, char *pattern,
 		}
 	}
 }
-
 
 void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 				char *text, char *pattern, vector<char> *frequent,
@@ -198,5 +197,5 @@ void ComputeHD(int32_t size_text, char *text, int32_t size_pattern,
     delete [] infrequent;
     delete fft_pattern;
     delete fft_text;
-    // delete fft_tmp;
+    delete fft_tmp;
 }

@@ -1,10 +1,10 @@
 /* Copyright : ???
-Author : Tatiana Rocher, tatiana.rocher@gmail.com (kangaroo algorithm) 
+Author : Tatiana Rocher, tatiana.rocher@gmail.com (kangaroo algorithm)
 & geeksforgeeks.org (SA, LCP, LU building et query)
 SA &  LCP : https://www.geeksforgeeks.org/%C2%AD%C2%ADkasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
 
 
-This file contains the kangaroo algorithm 
+This file contains the kangaroo algorithm
 used when there is more than 2*sqrt(k) frequent symbols.
 */
 
@@ -104,6 +104,9 @@ void BuildSuffixArray(char *txt, int size_suff_array, int** suff_array) {
     // Store indexes of all sorted suffixes in the suffix array
     for (int i = 0; i < size_suff_array; i++)
         (*suff_array)[i] = suffixes[i].index;
+
+    delete [] suffixes;
+    delete [] ind;
 }
 
 void BuildInvSuffArray(int32_t size_suff_array, int* suff_array,
@@ -214,7 +217,6 @@ void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
                 res[i] = current_nb_error+1;
             else
                 res[i] = current_nb_error;
-            // cout << i << " error : " << res[i] << endl << endl;
         }
     }
 }
@@ -245,13 +247,13 @@ void SortfreqInfreqCaract(int32_t size_pattern, char *pattern,
 
 void InterestingPosition(int32_t size_text, char *text,
                         vector<int32_t> *freqChar, float threshold_freq,
-                        int *dk) {
+                        int32_t size_res, int *dk) {
 int pos_in_pat;
     for (int i = 0; i < size_text; ++i) {
         if (IsFreq(text[i], freqChar))
             for (int j = 0; j < freqChar[CharToInt(text[i])].size() ; ++j) {
                 pos_in_pat = freqChar[CharToInt(text[i])][j];
-                if (i - pos_in_pat >=0) {
+                if (i - pos_in_pat >=0 && i - pos_in_pat < size_res) {
                     dk[i - pos_in_pat]++;
                 }
             }
@@ -317,8 +319,18 @@ void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
 
 
     int *dk = new int[size_res]();
-    InterestingPosition(size_text, text, freqChar, threshold_freq, dk);
+    InterestingPosition(size_text, text, freqChar, threshold_freq,
+                        size_res, dk);
 
     Kangaroo(size_text, size_pattern, size_suff_array, inv_suff_array, lcp,
                 lu, size_res, nb_error_max, dk, res);
+
+    delete [] text_pattern;
+    delete [] suff_array;
+    delete [] inv_suff_array;
+    delete [] lcp;
+    for (int i=0; i<size_suff_array; ++i)
+        lu[i].clear();
+    delete [] lu;
+    delete [] dk;
 }

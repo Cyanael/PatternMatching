@@ -34,9 +34,9 @@ void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
                             vector<int32_t> *infreq, int size_alphabet);
 
 void InterestingPosition(int32_t size_text, char *text, vector<int32_t> *freqChar,
-                        float threshold_freq, int *dk);
+                        float threshold_freq, int32_t size_res, int *dk);
 
-void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern, 
+void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
                         char *pattern, vector<int32_t> *infrequent, float threshold,
                         int size_alphabet, int nb_errors, int32_t size_res, int *res);
 
