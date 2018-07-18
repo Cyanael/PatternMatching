@@ -5,6 +5,45 @@
 #include <vector>
 
 using namespace std;
+int LIMIT = 524288;  // size of the output buffer
+
+void ReadFile(string file, int32_t *size_pattern, char **pattern) {
+	ifstream file_pattern(file.c_str(), ios::in);
+	char character;
+
+	if (file_pattern) {
+		int size_tmp;
+		file_pattern >> size_tmp;
+		(*size_pattern) = size_tmp;
+
+		file_pattern.get(character);  // eliminate the \n character
+		(*pattern) = new char[size_tmp]();
+		for (int32_t i = 0; i < size_tmp; ++i) {
+			file_pattern.get(character);
+			(*pattern)[i] = character;
+		}
+
+		file_pattern.close();
+	}
+	else
+		cout << "Can't open pattern file." << endl;
+}
+
+void WriteOuput(int32_t size_res, int *res, ofstream &file_out) {
+    string buffer;
+    buffer.reserve(LIMIT);
+    string res_i_str;
+    for (int32_t i = 0; i < size_res; ++i) {
+            res_i_str = to_string(res[i]);
+        if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
+            file_out << buffer;
+            buffer.resize(0);
+        }
+        buffer.append(res_i_str);
+        buffer.append("\n");
+    }
+    file_out << buffer;
+}
 
 int main(int argc, char* argv[]){
 
@@ -14,69 +53,55 @@ int main(int argc, char* argv[]){
 		cout << "/!\\ This algorithm is slow!" << endl;
 	}
 
-	chrono::time_point<chrono::system_clock> start, end;
+	chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
 
-	int m, n;
+	int32_t m, n;
 
-	string inPat= argv[2];
-	ifstream filePattern(inPat.c_str(), ios::in);
-	filePattern >> m;
-
-	vector<char> pattern;
-
-	for(int i = 0; i < m; i++){
-		char d;
-		filePattern >> d;
-		pattern.push_back(d);
-	}
-	filePattern.close();
-
+	char *text, *pattern;
 	string inText= argv[1];
-	ifstream fileText(inText.c_str(), ios::in);
-	fileText >> n;
-
+	string inPat= argv[2];
 	int error_max = atoi(argv[3]);
+
+	ReadFile(inText, &n, &text);
+	ReadFile(inPat, &m, &pattern);
 
 	string out = "verif.out";
 	ofstream fileOut(out.c_str(), ios::out | ios::trunc);
 
-	vector<char> text;
-	for (int i=0; i<m; i++){
-		char d;
-		fileText >> d;
-		text.push_back(d);
-	}
-
 	end = chrono::system_clock::now();
     texec = end-start;
     cout << "Init time : " << texec.count() << "s" << endl;
+	mid = end;
 
-	n = n-m;
-	char p, t, d;
-	int res;
-	int i;
+	int32_t size_res = n - m +1;
+	int *res = new int[size_res]();
 
-	while(n>=0){
-		res = 0;
-		i = 0;
-		while (res < error_max && i < m) {
-			if (pattern[i]!=text[i]){
-				res++;
+	char d;
+	int current_err, pos;
+
+	for (int i = 0; i < size_res; ++i){
+		current_err = 0;
+		pos = 0;
+		while (current_err < error_max && pos < m) {
+			if (pattern[pos]!=text[pos + i]){
+				current_err++;
 			}
-			i++;
+			pos++;
 		}
-		if (res >= error_max)
-			fileOut << "-1" << endl;
+		if (current_err >= error_max)
+		res[i] = -1;
 		else
-			fileOut << res << endl;
-
-		text.erase(text.begin(), text.begin()+1);
-		fileText >> d;
-		text.push_back(d);
-		n--;
+		res[i] = current_err;
 	}
+
+
+	end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "Total time : " << texec.count() << "s" << endl;
+
+	WriteOuput(size_res, res, fileOut);
 
 	end = chrono::system_clock::now();
     texec = end-start;

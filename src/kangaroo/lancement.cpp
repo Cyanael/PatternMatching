@@ -37,39 +37,57 @@ bool Usage() {
     cout << endl;
 }
 
+void InitTable(int32_t size, int *table) {
+    for (int i = 0; i < size; ++i)
+        table[i] = 0;
+}
+
 // Intialise the pattern, size_pattern and size_text  from a file
-void ConcatTextPattern(string file_text, string file_pattern,
-                        int32_t *size_text, int32_t *size_pattern,
-                        char **text) {
+void ConcatTextPattern(string file_text, int32_t *size_text,
+                    int32_t size_pattern, char **text_pattern, char **text) {
     ifstream stream_text(file_text.c_str(), ios::in);
-    ifstream stream_pattern(file_pattern.c_str(), ios::in);
     char character;
 
-    if (stream_pattern && stream_text) {
+    if (stream_text) {
         int size_tmp, size_tmp2;
         stream_text >> size_tmp;
         (*size_text) = size_tmp;
-        stream_pattern >> size_tmp2;
-        (*size_pattern) = size_tmp2;
 
         stream_text.get(character);  // eliminate the \n character
-        stream_pattern.get(character);  // same
-        (*text) = new char[size_tmp + size_tmp2]();
+        (*text) = new char[size_tmp];
+        (*text_pattern) = new char[size_tmp + size_tmp2]();
         for (int32_t i = 0; i < size_tmp; ++i) {
             stream_text.get(character);
             (*text)[i] = character;
+            (*text_pattern)[i] = character;
         }
-        for (int32_t i = 0; i < size_tmp2; ++i) {
-            stream_pattern.get(character);
-            (*text)[size_tmp + i] = character;
-        }
-
         stream_text.close();
-        stream_pattern.close();
+
+        for (int32_t i = 0; i < size_pattern; ++i) {
+            (*text_pattern)[(*size_text) + i] = 'a';
+        }
     }
     else
         cout << "Can't open pattern file." << endl;
 }
+
+void LoadPattern(int32_t size_text, char *text_pattern, int32_t size_pattern,
+                char **pattern) {
+
+    (*pattern) = new char[size_pattern]();
+    struct timespec ts;
+    if (timespec_get(&ts, TIME_UTC) == 0) {
+        cout << "error seed." << endl;
+    }
+    srandom(ts.tv_nsec ^ ts.tv_sec); // compute seed
+
+    int32_t begin = random()%(size_text - size_pattern);
+    for (int32_t i = 0; i < size_pattern; ++i){
+        (*pattern)[i] = text_pattern[begin + i];
+        text_pattern[size_text + i] = text_pattern[begin + i];
+    }
+}
+
 
 // A comparison function used by sort() to compare two suffixes
 // Compares two pairs, returns 1 if first pair is smaller
@@ -223,7 +241,7 @@ int Query(int* lcp, vector<int>* lu, int pos_start, int pos_end) {
         return lcp[lu[pos_end - (1 << j) + 1][j]];
 }
 
-void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
+int Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
                 int* inv_suff_array, int* lcp, vector<int>* lu,
                 int32_t size_res, int nb_error_max, int* res) {
     int32_t current_pos_p;
@@ -231,6 +249,7 @@ void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
     int current_nb_error;
     int pas;
     int start, end;
+    int nb_matchs = 0;
     for (int32_t i = 0; i < size_res; ++i) {
         current_pos_p = 0;
         current_pos_t = i;
@@ -248,29 +267,17 @@ void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
 
         if (current_pos_p < size_pattern)
             res[i] = -1;
-        else if (current_pos_p == size_pattern)
-            res[i] = current_nb_error+1;
-        else
-            res[i] = current_nb_error;
+        else {
+            nb_matchs++;
+            if (current_pos_p == size_pattern)
+                res[i] = current_nb_error+1;
+            else
+                res[i] = current_nb_error;
+            }
     }
+    return nb_matchs;
 }
 
-void WriteOuput(int32_t size_res, int *res,
-                ofstream &file_out) {
-    string buffer;
-    buffer.reserve(LIMIT);
-    string res_i_str;
-    for (int32_t i = 0; i < size_res; ++i) {
-            res_i_str = to_string(res[i]);
-        if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
-            file_out << buffer;
-            buffer.resize(0);
-        }
-        buffer.append(res_i_str);
-        buffer.append("\n");
-    }
-    file_out << buffer;
-}
 
 void printArr(int* arr, int n) {
     for (int i = 0; i < n; ++i)
@@ -285,8 +292,12 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    chrono::time_point<chrono::system_clock> start, mid, end;
+    chrono::duration<double> texec, tinit;
+    start = chrono::system_clock::now();
+
     string file_text = argv[1];
-    string file_pattern = argv[2];
+    int32_t size_pattern = atoi(argv[2]);
     int nb_error_max = atoi(argv[3]);
     string file_out = "out.out";
 
@@ -302,9 +313,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    chrono::time_point<chrono::system_clock> start, mid, end;
-    chrono::duration<double> texec, tinit;
-    start = chrono::system_clock::now();
 
     ofstream stream_out(file_out.c_str(), ios::out | ios::trunc);
     if (!stream_out) {
@@ -312,94 +320,164 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    int32_t size_text, size_pattern;
-    char *text_pattern;
-    ConcatTextPattern(file_text, file_pattern, &size_text,
-                        &size_pattern, &text_pattern);
+    int32_t size_text;
+    char *text_pattern, *text, *pattern;
+
+    float time_SA = 0, time_ISA  = 0, time_LCP = 0, time_naif = 0;
+    float time_LU = 0, time_init = 0, time_comput = 0, time_tot = 0;
+
+
+
+    ConcatTextPattern(file_text, &size_text, size_pattern, &text_pattern, &text);
 
     int32_t size_suff_array = size_text+size_pattern;
+    int32_t size_res = size_text - size_pattern + 1;
+
+    int *res = new int[size_res]();
+    int *res_naif = new int[size_res]();
     int *suff_array = new int[size_suff_array]();
     int *inv_suff_array = new int[size_suff_array]();
-
-    end = chrono::system_clock::now();
-    texec = end-start;
-    cout << "   Text-Pattern : " << texec.count() << endl;
-    mid = end;
-
-    BuildSuffixArray(text_pattern, size_suff_array, &suff_array);
-
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    cout << "   SA : " << texec.count() << endl;
-    mid = end;
-
-    BuildInvSuffArray(size_suff_array, suff_array, &inv_suff_array);
-
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    cout << "   ISA : " << texec.count() << endl;
-    mid = end;
-
     int *lcp = new int[size_suff_array]();
-    Kasai(text_pattern, size_suff_array, suff_array, &lcp, inv_suff_array);
-
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    cout << "   LCP : " << texec.count() << endl;
-    mid = end;
-    // cout << "Suffix Array : \n";
-    // printArr(suff_array, size_suff_array);
-    // cout << "LCP Array : \n";
-    // printArr(lcp, size_suff_array);
-
     vector<int> *lu = new vector<int>[size_suff_array]();
-    BuildLU(lcp, size_suff_array, lu);
-
-    cout << "LU Array : " << endl;
-    // for (int i=0; i<size_suff_array; ++i) {
-    //     for (int j=0; j<lu[i].size(); ++j)
-    //         cout << lu[i][j] << " ";
-    //     cout << endl;
-    // }
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    cout << "   LU : " << texec.count() << endl;
-    mid = end;
-    end = chrono::system_clock::now();
-    texec = end-start;
-    cout << "Init : " << texec.count() << endl;
-    mid = end;
-
-    int32_t size_res = size_text - size_pattern + 1;
-    int *res = new int[size_res]();
-    Kangaroo(size_text, size_pattern, size_suff_array, inv_suff_array,
-            lcp, lu, size_res, nb_error_max, res);
 
     end = chrono::system_clock::now();
-    texec = end-mid;
-    cout << "Computation : " << texec.count() << endl;
-    mid = end;
+    tinit = end-start;
+    cout << "Init : " << tinit.count() << endl;
 
-    // Write in output file
-    cout << "Writing results in output file: " << file_out << endl;
-    WriteOuput(size_pattern, size_res, res, stream_out);
+    int nb_loops = 20;
+    for (int i=0; i<nb_loops; ++i) {
 
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    cout << "Writing time : " << texec.count() << endl;
-    mid = end;
-    texec = end-start;
-    cout << "Total : " << texec.count() << endl;
-    mid = end;
+        LoadPattern(size_text, text_pattern, size_pattern, &pattern);
 
-    delete [] text_pattern;
-    delete [] res;
-    delete [] suff_array;
+        InitTable(size_suff_array, suff_array);
+        InitTable(size_suff_array, inv_suff_array);
+        InitTable(size_suff_array, lcp);
+        InitTable(size_res, res);
+        for (int j = 0; j < size_suff_array; ++j)
+            lu[j].clear();
+
+
+        cout << "textpat : " << size_suff_array << endl ;
+        // for (int j = 0; j < size_suff_array; ++j)
+        //     cout << text_pattern[j];
+        // cout << endl;
+
+        start = chrono::system_clock::now();
+
+        BuildSuffixArray(text_pattern, size_suff_array, &suff_array);
+
+        end = chrono::system_clock::now();
+        texec = end-start;
+        // cout << "   SA : " << texec.count() << endl;
+        mid = end;
+        time_SA += texec.count();
+
+        BuildInvSuffArray(size_suff_array, suff_array, &inv_suff_array);
+
+        end = chrono::system_clock::now();
+        texec = end-mid;
+        // cout << "   ISA : " << texec.count() << endl;
+        mid = end;
+        time_ISA += texec.count();
+
+        Kasai(text_pattern, size_suff_array, suff_array, &lcp, inv_suff_array);
+
+        end = chrono::system_clock::now();
+        texec = end-mid;
+        // cout << "   LCP : " << texec.count() << endl;
+        mid = end;
+        time_LCP += texec.count();
+
+        BuildLU(lcp, size_suff_array, lu);
+
+        end = chrono::system_clock::now();
+        texec = end-mid;
+        // cout << "   LU : " << texec.count() << endl;
+        mid = end;
+        time_LU += texec.count();
+        end = chrono::system_clock::now();
+        texec = end-start;
+        // cout << "Init : " << texec.count() << endl;
+        mid = end;
+        time_init += texec.count();
+
+        int nb_matches = Kangaroo(size_text, size_pattern, size_suff_array,
+                        inv_suff_array, lcp, lu, size_res, nb_error_max, res);
+
+        end = chrono::system_clock::now();
+        texec = end-mid;
+        // cout << "Computation : " << texec.count() << endl;
+        // cout << "Nb matches = " << nb_matches << endl;
+        mid = end;
+        time_comput += texec.count();
+
+        texec = end-start;
+        cout << "Total : " << texec.count() + tinit.count() + 0.83 << endl;
+        time_tot += texec.count() + tinit.count() + 0.83;
+        mid = chrono::system_clock::now();
+
+        // naive algo
+        int curr_error, pos_p;
+        for (int j = 0; j < size_res; ++j) {
+            curr_error = 0;
+            pos_p = 0;
+            while (curr_error < nb_error_max && pos_p < size_pattern) {
+    			if (pattern[pos_p]!=text[j + pos_p]){
+    				curr_error++;
+    			}
+    			pos_p++;
+    		}
+
+            if (curr_error >= nb_error_max)
+                res_naif[j] = -1;
+            else
+                res_naif[j] = curr_error;
+        }
+
+        end = chrono::system_clock::now();
+        texec = end-mid;
+        cout << "Naif : " << texec.count() + tinit.count() + 0.83 << endl;
+        time_naif += texec.count() + tinit.count() + 0.83;
+
+        bool verif = true;
+        int pos = 0;
+        while (verif && pos < size_res) {
+            if (res[pos] != res_naif[pos])
+                verif = false;
+            pos++;
+        }
+        if (verif)
+            cout << "Res egaux" << endl;
+        else
+            cout << "Res differents" << endl;
+
+    }
     delete [] lcp;
-    delete [] inv_suff_array;
+    delete [] res;
     for (int i=0; i<size_suff_array; ++i)
-        lu[i].clear();
+    lu[i].clear();
     delete [] lu;
+    delete [] text_pattern;
+    delete [] suff_array;
+    delete [] inv_suff_array;
+
+    time_SA /= nb_loops;
+    time_ISA  /= nb_loops;
+    time_LCP /= nb_loops;
+    time_LU /= nb_loops;
+    time_init /= nb_loops;
+    time_comput /= nb_loops;
+    time_tot /= nb_loops;
+    time_naif /= nb_loops;
+
+    cout << "Av SA : " << time_SA << endl;
+    cout << "Av ISA : " << time_ISA << endl;
+    cout << "Av LCP : " << time_LCP << endl;
+    cout << "Av LU : " << time_LU << endl;
+    cout << "Av init : " << time_init << endl;
+    cout << "Av comput : " << time_comput << endl;
+    cout << "Av tot : " << time_tot << endl;
+    cout << "Av naif : " << time_naif << endl;
 
     return 0;
 }
