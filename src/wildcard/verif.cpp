@@ -1,60 +1,102 @@
 #include<iostream>
 #include <fstream>
-#include <ctime> 
+#include <ctime>
 #include <chrono>
+#include <vector>
 
 using namespace std;
+int LIMIT = 524288;  // size of the output buffer
+
+void ReadFile(string file, int32_t *size_pattern, char **pattern) {
+	ifstream file_pattern(file.c_str(), ios::in);
+	char character;
+
+	if (file_pattern) {
+		int size_tmp;
+		file_pattern >> size_tmp;
+		(*size_pattern) = size_tmp;
+
+		file_pattern.get(character);  // eliminate the \n character
+		(*pattern) = new char[size_tmp]();
+		for (int32_t i = 0; i < size_tmp; ++i) {
+			file_pattern.get(character);
+			(*pattern)[i] = character;
+		}
+
+		file_pattern.close();
+	}
+	else
+		cout << "Can't open pattern file." << endl;
+}
+
+void WriteOuput(int32_t size_res, int *res, ofstream &file_out) {
+    string buffer;
+    buffer.reserve(LIMIT);
+    string res_i_str;
+    for (int32_t i = 0; i < size_res; ++i) {
+            res_i_str = to_string(res[i]);
+        if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
+            file_out << buffer;
+            buffer.resize(0);
+        }
+        buffer.append(res_i_str);
+        buffer.append("\n");
+    }
+    file_out << buffer;
+}
 
 int main(int argc, char* argv[]){
 
-	chrono::time_point<chrono::system_clock> start, end;
+	if (argc < 3) {
+		cout << "Usage: ./exec text_file pattern_file" << endl;
+		cout << "If no ouput file is mentionned, result is in verif.out." << endl;
+		cout << "/!\\ This algorithm is slow!" << endl;
+	}
+
+	chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
 
-	int m, n;
+	int32_t m, n;
 
-	string inPat= argv[2];
-	ifstream filePattern(inPat.c_str(), ios::in);
-	filePattern >> m;
-
-	double *text, *pattern;
-	text = (double *) malloc(m*sizeof(double));
-	pattern = (double *) malloc(m*sizeof(double));
-
-	// cout << "Input : " << endl;
-	for(int i = 0; i < m; i++)
-		filePattern >> pattern[i];
-	filePattern.close();
-	
+	char *text, *pattern;
 	string inText= argv[1];
-	ifstream fileText(inText.c_str(), ios::in);
-	fileText >> n;
+	string inPat= argv[2];
+
+	ReadFile(inText, &n, &text);
+	ReadFile(inPat, &m, &pattern);
 
 	string out = "verif.out";
 	ofstream fileOut(out.c_str(), ios::out | ios::trunc);
 
-	for (int i=0; i<m; i++)
-		fileText >> text[i];
+	end = chrono::system_clock::now();
+    texec = end-start;
+    cout << "Init time : " << texec.count() << "s" << endl;
+	mid = end;
 
-	n = n-m;
-	int p, t, res;
+	int32_t size_res = n - m +1;
+	int *res = new int[size_res]();
 
-	while(n>=0){
-		res = 0;
-		for (int i=0; i<m; i++){
-			p = pattern[i];
-			t = text[i];
-			res += p * t * (t-p) * (t-p);
+	char d;
+	int result, p, t;
+
+	for (int i = 0; i < size_res; ++i){
+		result = 0;
+		for (int j = 0; j < m; ++j) {
+			p = pattern[j];
+			t = text[i + j];
+			result += p * t * (t-p) * (t-p);
 		}
-		fileOut << res << endl;
-
-		for (int i=0; i<m-1; i++)
-			text[i] = text[i+1];
-		fileText >> text[m-1];
-		n--;
+		res[i] = result;
 	}
 
-	
+
+	end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "Total time : " << texec.count() << "s" << endl;
+
+	WriteOuput(size_res, res, fileOut);
+
 	end = chrono::system_clock::now();
     texec = end-start;
     cout << "Total time : " << texec.count() << "s" << endl;
