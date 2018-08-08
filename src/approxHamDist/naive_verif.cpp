@@ -78,16 +78,16 @@ int main(int argc, char* argv[]){
 	int *res = new int[size_res]();
 
 	char d;
-	int result, p, t;
+	int current_err;
 
 	for (int i = 0; i < size_res; ++i){
-		result = 0;
+		current_err = 0;
 		for (int j = 0; j < m; ++j) {
-			p = pattern[j];
-			t = text[i + j];
-			result += p * t * (t-p) * (t-p);
+			if (pattern[j]!=text[j + i]){
+				current_err++;
+			}
 		}
-		res[i] = result;
+		res[i] = current_err;
 	}
 
 
