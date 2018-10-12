@@ -1,190 +1,416 @@
 /* Copyright : ???
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
-
-This file contains the Hamming distance algorithm
-used when there is at most 2*sqrt(k) frequent symbols.
 */
 
-#include <unistd.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
+#include <cassert>
 #include <cstdint>
 #include <chrono>
+#include <unistd.h>
 
 extern "C" {
-	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
+  #include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
 }
 
 #include "Fft_wak.hpp"
-#include "HammingDistance.hpp"
 #include "Tools.hpp"
+#include "LCP.hpp"
 
 using namespace std;
 
 
-void InitTabZeros(int32_t size, int32_t *tab) {
-	for (int32_t i = 0; i < size; i++)
-		tab[i] = 0;
+void MapLetters(int k_nb_letters, int size_alphabet, int size_prime_number, int *prime_numbers, int *map) {
+  struct timespec ts;
+  if (timespec_get(&ts, TIME_UTC) == 0) {
+    cout << "error seed." << endl;
+  }
+  srandom(ts.tv_nsec ^ ts.tv_sec); // compute seed
+
+  int p = 0;
+  int r;
+  while(p<=size_alphabet){
+    r = random()%size_prime_number;
+    p = prime_numbers[r];
+  }
+  int a = random()%p;
+  int b = random()%p;
+
+  if (size_alphabet <= 90) // number of character we can read ('!' (33) to 'z' (122))
+    for (int i = 0; i < k_nb_letters; ++i)
+      map[i] = ((a*i + b) % p) % size_alphabet + 33; // we add 33 to have characters we can read in tests
+  else
+    for (int i = 0; i < k_nb_letters; ++i)
+      map[i] = ((a*i + b) % p) % size_alphabet;
 }
 
+char CharMap(char letter, int *map) {
+    return IntToChar(map[CharToInt(letter)]);
+}
+
+bool SortVectorOfPair(pair<char, int> a, pair<char, int> b) {
+  return a.first < b.first;
+}
+
+void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
+            int *map, int size_alphabet, vector<char> *freq,
+                        vector<int32_t> *infreq) {
+    freq->clear();
+    infreq->clear();
+  for (int32_t i = 0; i < size_pattern; ++i) {
+        int current_val = map[CharToInt(pattern[i])];
+    if (infreq[current_val].size() == 0) {
+      vector<int32_t> v = {i};
+      infreq[current_val] = v;
+    }
+    else {
+      infreq[current_val].push_back(i);
+    }
+  }
+  for (int32_t i = 0; i < size_alphabet; ++i) {
+    if (infreq[i].size() >= limit) {
+      freq->push_back(IntToChar(i));
+      infreq[i].clear();
+    }
+  }
+}
+
+void SortFreqCaract(int32_t size_pattern, char *pattern, int k_nb_letters,
+            float limit, int *map, int size_alphabet, vector<char> *freq) {
+    freq->clear();
+    int *infreq = new int[k_nb_letters]();
+  for (int32_t i = 0; i < size_pattern; ++i) {
+        int current_val = map[CharToInt(pattern[i])];
+    if (infreq[current_val] == 0) {
+      infreq[current_val] = 1;
+      freq->push_back(current_val);
+    }
+  }
+  delete [] infreq;
+}
+
+
+
 bool IsInfreq(char letter, vector<int32_t> *infreq) {
-	if (infreq[CharToInt(letter)].size() > 0)
-		return true;
-	return false;
+  if (infreq[CharToInt(letter)].size() > 0)
+    return true;
+  return false;
 }
 
 // Computes the boolean vector of the text
 // when there is a 1 where the matching letter is "letter"
-void MatchLetterText(int32_t size, char *text, char letter,
-					FFT_wak *fft_text) {
-	for (int32_t i = 0; i < size; ++i) {
-		if(text[i] == letter)
-			fft_text->setVal(i, 1);
-		else
-			fft_text->setVal(i, 0);
-	}
-	if (size < fft_text->getSize()) {
-		for (int32_t i = size; i < fft_text->getSize(); ++i)
-			fft_text->setVal(i, 0);
-	}
+// use the map
+void MatchLetterTextApprox(int32_t size, char *text, char letter,
+          int *map, FFT_wak *fft_text) {
+  for (int32_t i = 0; i < size; ++i) {
+    if(CharMap(text[i], map) == letter)
+      fft_text->setVal(i, 1);
+    else
+      fft_text->setVal(i, 0);
+  }
+  if (size < fft_text->getSize()) {
+    for (int32_t i = size; i < fft_text->getSize(); ++i)
+      fft_text->setVal(i, 0);
+  }
 }
 
+
+// Computes the boolean vector of the text
+// when there is a 1 where the matching letter is "letter"
+void MatchLetterText(int32_t size, char *text, char letter,
+          FFT_wak *fft_text) {
+  for (int32_t i = 0; i < size; ++i) {
+    if(text[i] == letter)
+      fft_text->setVal(i, 1);
+    else
+      fft_text->setVal(i, 0);
+  }
+  if (size < fft_text->getSize()) {
+    for (int32_t i = size; i < fft_text->getSize(); ++i)
+      fft_text->setVal(i, 0);
+  }
+}
 
 void ReversePattern(int32_t size, FFT_wak *fft_pattern) {
-	double tmp;
-	for (int32_t i = 0; i < size/2; ++i) {
-		tmp = fft_pattern->getVal(i);
-		fft_pattern->setVal(i, fft_pattern->getVal(size-i-1));
-		fft_pattern->setVal(size-i-1, tmp);
-	}
-}
-
-void SortfreqInfreqCaract(int32_t size_pattern, char *pattern,
-						float threshold_freq, vector<char> *freq,
-						vector<int32_t> *infreq, int size_alphabet) {
-	for (int32_t i = 0; i < size_alphabet; ++i) {
-		if (infreq[i].size() >= threshold_freq) {
-			freq->push_back(IntToChar(i));
-			infreq[i].clear();
-		}
-	}
+  double tmp;
+  for (int32_t i = 0; i < size/2; ++i) {
+    tmp = fft_pattern->getVal(i);
+    fft_pattern->setVal(i, fft_pattern->getVal(size-i-1));
+    fft_pattern->setVal(size-i-1, tmp);
+  }
 }
 
 void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
-				char *text, char *pattern, vector<char> *frequent,
-				FFT_wak *fft_text, FFT_wak *fft_pattern, FFT_wak *fft_res,
-				int *res) {
-	InitTabZeros(size_res, res);
+        char *text, char *pattern, vector<char> *frequent, int *map,
+        FFT_wak *fft_text, FFT_wak *fft_pattern, FFT_wak *fft_res,
+        int *res) {
+  InitTabZeros(size_res, res);
 
-	chrono::time_point<chrono::system_clock> start, mid, end;
-	chrono::duration<double> texec;
-	char current_char;
-	for (auto j = frequent->begin(); j != frequent->end(); ++j) {
-		current_char = *j;
+  char current_char;
+  for (auto j = frequent->begin(); j != frequent->end(); ++j) {
+    current_char = *j;
+    MatchLetterTextApprox(size_text, text, current_char, map, fft_text);
+    MatchLetterTextApprox(size_pattern, pattern, current_char, map, fft_pattern);
+    ReversePattern(size_pattern, fft_pattern);
 
-		start = chrono::system_clock::now();
-		MatchLetterText(size_text, text, current_char, fft_text);
-		MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	bit vect : " << texec.count() << "s" << endl;
-		mid = end;
+    fft_text->ExecFFT();
 
-		ReversePattern(size_pattern, fft_pattern);
-		fft_text->ExecFFT();
-		fft_pattern->ExecFFT();
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	fft exec : " << texec.count() << "s" << endl;
-		mid = end;
+    fft_pattern->ExecFFT();
 
-		fft_res->FFTMultiplication(fft_text, fft_pattern);
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	mult + iexec : " << texec.count() << "s" << endl;
-		mid = end;
+    fft_res->FFTMultiplication(fft_text, fft_pattern);
+    fft_res->ExecFFT();
 
-		fft_res->ExecFFT();
-
-		for (int32_t i = 0; i < size_res; ++i) {
-			// sometime, the double variable is close to an integer
-			// but a little inferior, the +0,5 corrects the cast into an integer
-			res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
-		}
-
-			end = chrono::system_clock::now();
-			texec = end-mid;
-			cout << "	write res : " << texec.count() << "s" << endl;
-			mid = end;
-	}
+    for (int32_t i = 0; i < size_res; ++i) {
+      // sometime, the double variable is close to an integer
+      // but a little inferior, the +0,5 corrects the cast into an integer
+      res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
+    }
+  }
 }
 
 void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
-				vector<int32_t> *infreq, int *res) {
-	int current_char;
-	for (int32_t i = 0; i < size_text; ++i) {
-		if (IsInfreq(text[i], infreq)) {
-			current_char = CharToInt(text[i]);
-			for (int32_t j = 0; j < infreq[current_char].size(); ++j) {
-				if (i >= infreq[current_char][j]
-					&& i - infreq[current_char][j] < size_res) {
-					res[i-infreq[current_char][j]]++;
-				}
-			}
-		}
-	}
+        int *map, vector<int32_t> *infreq, int *res) {
+  int current_val;
+  for (int32_t i = 0; i < size_text; ++i) {
+    if (IsInfreq(CharMap(text[i], map), infreq)) {
+      current_val = map[CharToInt(text[i])];
+      for (int32_t j = 0; j < infreq[current_val].size(); ++j) {
+        if ((i >= infreq[current_val][j]) && (i-infreq[current_val][j] < size_res)) { 
+          res[i-infreq[current_val][j]]++;
+        }
+      }
+    }
+  }
 }
 
 
-void ComputeHD(int32_t size_text, char *text, int32_t size_pattern,
-						char *pattern, vector<int32_t> *infrequent, float threshold_freq,
-						int size_alphabet, int32_t size_res, int *res) {
-    chrono::time_point<chrono::system_clock> start, mid, end;
-    chrono::duration<double> texec;
-    start = chrono::system_clock::now();
-
-	// Init size_fft: the lenght used for the FFTs
-	// It is a power of 2 (see FFTW documentation)
-    int32_t size_fft = UpperPowOfTwo(size_text);
-
-	// Initialise the fftw_plan. Should be done before initialising the in/output
-    FFT_wak *fft_text = new FFT_wak(size_fft);
-    FFT_wak *fft_pattern = new FFT_wak(size_fft);
-    FFT_wak *fft_tmp = new FFT_wak(size_fft, false);
-	// false indicates that we make a plan for a FFT inverse
-
-    vector<char> frequent;
-
-    SortfreqInfreqCaract(size_pattern, pattern, threshold_freq,
-						&frequent, infrequent, size_alphabet);
+void KeepSmaller(int32_t size_res, int *tmp_res, int *res) {
+    for (int32_t i = 0; i < size_res; ++i)
+    if (res[i] > tmp_res[i])
+            res[i] = tmp_res[i];
+}
 
 
-    cout << "freq " << frequent.size() << " : ";
-    for (int i = 0; i < frequent.size(); i++)
-        cout << frequent[i] << " ";
-    cout << endl;
+void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
+            char *pattern, int k_nb_letters, float epsilon,
+            int32_t size_res, int *res) {
+  chrono::time_point<chrono::system_clock> start, mid, end;
+  chrono::duration<double> texec;
+  start = chrono::system_clock::now();
+  mid = start;
+
+  int cst_loop = 1;
+  int *prime_numbers;
+  int size_prime_number;
+  ReadIntFile("prime_numbers.txt", &size_prime_number, &prime_numbers);
+
+  // Init size_fft: the lenght used for the FFTs
+  // It is a power of 2 (see FFTW documentation)
+  int32_t size_fft = UpperPowOfTwo(size_text);
+
+  // Initialise the fftw_plan. Should be done before initialising the in/output
+  FFT_wak *fft_text = new FFT_wak(size_fft);
+  FFT_wak *fft_pattern = new FFT_wak(size_fft);
+  FFT_wak *fft_tmp = new FFT_wak(size_fft, false);
+  // false indicates that we make a plan for a FFT inverse
+
+  // Init size_res : length of the res table which indicates the hamm dist
+  int *tmp_res = new int[size_res]();
+  for (int32_t i = 0; i < size_res; ++i)
+    res[i] = size_pattern;
+
+  int32_t threshold_freq = sqrt(size_pattern *log2(size_text));
+  vector<char> frequent;
+  vector<int32_t> *infrequent = new vector<int32_t>[k_nb_letters];
+
+  int32_t cpt_loop = cst_loop * log2(size_text);
+  int *map = new int[k_nb_letters];
+  int size_alphabet = min(round(2 / epsilon), (float)k_nb_letters);
+  if (size_alphabet == k_nb_letters)
+    cpt_loop = 1;
+    // cout << "Number of loop iterations: " << cpt_loop << endl;
+
+  end = chrono::system_clock::now();
+  texec = end-mid;
+  // cout << "init : " << texec.count() << "s" << endl;
+  mid= end;
+
+  for (int i = 0; i < cpt_loop; ++i) {
+    MapLetters(k_nb_letters, size_alphabet, size_prime_number, prime_numbers, map);
+
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << endl << "  map letters : " << texec.count() << "s" << endl;
+    mid = end;
+
+    // Sort P's caracteres in frequent/infrequent caractere
+    SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
+                            size_alphabet, &frequent, infrequent);
+    
+    SortFreqCaract(size_pattern, pattern, k_nb_letters, threshold_freq, map,
+                              size_alphabet, &frequent);
+
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << " sort freq / infreq : " << texec.count() << "s" << endl;
+    mid = end;
 
     ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
-				fft_text, fft_pattern, fft_tmp, res);
+            map, fft_text, fft_pattern, fft_tmp, tmp_res);
 
     end = chrono::system_clock::now();
     texec = end-mid;
-    cout << "total freq : " << texec.count() << "s" << endl;
+    // cout << " freq : " << texec.count() << "s   nb freq :" << frequent.size() << endl;
     mid = end;
 
-    ComputeInfreq(size_text, text, size_res, infrequent, res);
+    ComputeInfreq(size_text, text, size_res, map, infrequent, tmp_res);
 
     end = chrono::system_clock::now();
     texec = end-mid;
-    cout << "total infreq : " << texec.count() << "s" << endl;
+    // cout << " infreq : " << texec.count() << "s" << endl;
+    mid= end;
+
+    KeepSmaller(size_res, tmp_res, res);
+
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << "  res : " << texec.count() << "s" << endl;
+    mid= end;
+  }
+
+  for (int i = 0; i < size_res; ++i)
+    res[i] = size_pattern - res[i];
+
+  delete [] tmp_res;
+  delete [] map;
+  delete [] prime_numbers;
+
+  frequent.clear();
+  for (int i = 0; i < k_nb_letters; ++i)
+    infrequent[i].clear();
+  delete [] infrequent;
+
+  delete fft_pattern;
+  delete fft_text;
+  delete fft_tmp;
+
+  end = chrono::system_clock::now();
+  texec = end-start;
+  // cout << "Total time : " << texec.count() << "s" << endl;
+}
+
+int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
+                          float epsilon, int position_max, int value_max) {
+  int32_t size_pattern2 = size_pattern * 2 - 1;
+  char * pattern2 = new char[size_pattern2];
+  int32_t size_res = size_pattern;
+  int* res = new int[size_res];
+
+  //  create a second string containing the pattern followed by m '$' symbols
+  for (int32_t i = 0; i < size_pattern; ++i)
+    pattern2[i] = pattern[i];
+  for (int32_t i = size_pattern; i < size_pattern2; ++i)
+    pattern2[i] = '$';
+
+  ApproxHD(size_pattern2, pattern2, size_pattern, pattern, k_nb_letters, (float)1, size_res, res);
+
+  for (int i = 1; i <= position_max && size_res; ++i){
+    if (res[i] < value_max) {
+      delete [] pattern2;
+      delete [] res;
+      return i;
+    }
+  }
+
+  delete [] pattern2;
+  delete [] res;
+
+  return 0;
+}
+
+
+void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
+                      char *pattern, int k_nb_letters, int error_k,
+                      int32_t size_res, int *res) {
+  float epsilon = 1;
+  ApproxHD(size_text, text, size_pattern, pattern, k_nb_letters, epsilon, size_res, res);
+  cout << "approx res" << endl;
+  PrintTable(size_res, res);
+
+  vector<int32_t> pos_to_search;
+  for (int32_t i= 0; i < size_res; ++i)
+    if(res[i] <= error_k)
+      pos_to_search.push_back(i);
+  LCP(size_text, text, size_pattern, pattern, k_nb_letters, error_k, 
+      pos_to_search, size_res, res);
+}
+
+
+
+
+void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern, 
+         vector<char> *frequent, int32_t size_res, int *res) {
+  InitTabZeros(size_res, res);
+
+  int32_t size_fft = UpperPowOfTwo(size_text);
+  FFT_wak *fft_text = new FFT_wak(size_fft);
+  FFT_wak *fft_pattern = new FFT_wak(size_fft);
+  FFT_wak *fft_res = new FFT_wak(size_fft, false);
+
+  chrono::time_point<chrono::system_clock> start, mid, end;
+  chrono::duration<double> texec;
+  char current_char;
+  
+  for (auto j = frequent->begin(); j != frequent->end(); ++j) {
+    current_char = *j;
+
+    start = chrono::system_clock::now();
+    MatchLetterText(size_text, text, current_char, fft_text);
+    MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << " bit vect : " << texec.count() << "s" << endl;
     mid = end;
-    texec = end-start;
-    cout << endl << "Total algorithm : " << texec.count() <<"s" << endl << endl;
 
+    ReversePattern(size_pattern, fft_pattern);
+    fft_text->ExecFFT();
+    fft_pattern->ExecFFT();
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << " fft exec : " << texec.count() << "s" << endl;
+    mid = end;
 
-    delete [] infrequent;
-    delete fft_pattern;
+    fft_res->FFTMultiplication(fft_text, fft_pattern);
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << " mult + iexec : " << texec.count() << "s" << endl;
+    mid = end;
+
+    fft_res->ExecFFT();
+
+    for (int32_t i = 0; i < size_res; ++i) {
+      // sometime, the double variable is close to an integer
+      // but a little inferior, the +0,5 corrects the cast into an integer
+      res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
+    }
+
+      end = chrono::system_clock::now();
+      texec = end-mid;
+      // cout << " write res : " << texec.count() << "s" << endl;
+      mid = end;
+  }
+
     delete fft_text;
-    delete fft_tmp;
+    delete fft_pattern;
+    delete fft_res;
+}
+
+int NaiveHD(char *text, int32_t size_pattern, char *pattern, int32_t pos) {
+  int res = 0;
+  for (int i = 0; i < size_pattern; ++i)
+    if (pattern[i] != text[pos + i])
+      res++;
+  return res;
 }

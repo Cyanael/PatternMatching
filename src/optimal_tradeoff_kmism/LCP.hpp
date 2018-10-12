@@ -26,19 +26,12 @@ int Query(int* lcp, vector<int>* lu, int pos_start, int pos_end);
 
 void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
                 int* inv_suff_array, int* lcp, vector<int>* lu,
-                int32_t size_res, int nb_error_max, int* res);
+                int32_t size_res, int nb_error_max, vector<int32_t> pos_to_search, int* res);
 
-bool IsFreq(char letter, vector<int32_t> *freqChar);
-
-void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
-                            vector<int32_t> *infreq, int size_alphabet);
-
-void InterestingPosition(int32_t size_text, char *text, vector<int32_t> *freqChar,
-                        float threshold_freq, int32_t size_res, int *dk);
-
-void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
-                        char *pattern, vector<int32_t> *infrequent, float threshold,
-                        int size_alphabet, int nb_errors, int32_t size_res, int *res);
+void LCP(int32_t size_text, char *text, int32_t size_pattern,
+                        char *pattern, int size_alphabet,
+                        int nb_error_max, vector<int32_t> pos_to_search, 
+                        int32_t size_res, int *res);
 
 
 #endif  // LCP_HPP

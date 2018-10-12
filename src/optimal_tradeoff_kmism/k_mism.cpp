@@ -3,10 +3,10 @@ Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
 install the fftw3 library
-g++ -std=c++11 -O3 hamDist.cpp Fft_wak.cpp -o hd -lfftw3 -lm
+make
 
 Execution :
-./hd text.in pattern.in optional.out
+./opti text.in pattern.in error_max -o optionalOutput.out -p optionalPlan
 The pattern/text input file must contain its lenght then the pattern/text
 */
 
@@ -40,6 +40,8 @@ bool Usage() {
 	cout << "If your text is longer, consider spliting it."<< endl;
 	cout << "Be carefull to have only ascii characters ";
 	cout << "in the text and pattern" << endl;
+	cout << "Characters \'$\' and \'#\' are used in the algorithm. ";
+	cout << "Differencies may occur if they are present in your text." << endl;
 	cout << endl;
 }
 
@@ -72,20 +74,20 @@ void ReadFile(string file, int32_t *size_pattern, char **pattern) {
 		stream_file.close();
 	}
 	else
-		cout << "Can't open pattern file." << endl;
+		cout << "Can't open file." << endl;
 }
 
-void WriteOuput(int32_t size_pattern, int32_t size_res, int *res,
-				int error_k, ofstream &stream_out) {
+void WriteOuput(int32_t size_res, int *res, int error_k,
+				ofstream &stream_out) {
 	string buffer;
 	buffer.reserve(LIMIT);
 	string res_i_str;
 	int cpt = 0;
 	for (int32_t i = 0; i < size_res; ++i) {
-		if (size_pattern - res[i] > error_k)
+		if (res[i] > error_k)
 			res_i_str = to_string(-1);
 		else
-			res_i_str = to_string(size_pattern - res[i]);
+			res_i_str = to_string(res[i]);
     	if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {
         	stream_out << buffer;
 			cpt++;
@@ -97,25 +99,10 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res,
 	stream_out << buffer;
 }
 
-int findApproximatePeriod(int32_t size_pattern, char* pattern, int k) {
-  int mism_so_far;
-  bool found_approximate_period = false;
-  for (int i = 1; i <= k && found_approximate_period == false; i++) {
-    mism_so_far = 0;
-    for (int j = 0; j <= size_pattern-1-i && mism_so_far <= 4*k; j++) {
-      if (pattern[j] != pattern[i+j])
-        mism_so_far++;
-    }
-    cout << i << " : " << mism_so_far << endl;
-    if (mism_so_far <= 4*k)
-      return i;
-  }
-  return 0;
-}
 
 
 int main(int argc, char* argv[]) {
-	if (argc < 3) {
+	if (argc < 4) {
 		Usage();
 		return 0;
 	}
@@ -149,97 +136,48 @@ int main(int argc, char* argv[]) {
 	int *res;
 
 	// Open and read the files containing the text and pattern
-	ReadFile(file_pattern, &size_pattern, &pattern);
 	ReadFile(file_text, &size_text, &text);
+	ReadFile(file_pattern, &size_pattern, &pattern);
 	assert(size_text >= size_pattern &&
 			"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
 	size_res = size_text - size_pattern +1;
-    res = new int[size_text - size_pattern];
+    res = new int[size_res];
+    InitTabZeros(size_res, res);
 
-    // Recherche periode
-	int approx_period = findApproximatePeriod(size_pattern, pattern, error_k);
+    // Open output file
+	ofstream stream_out(file_out.c_str(), ios::out | ios::trunc);
+	if (!stream_out) {
+		cout << "Can't open output file." << endl;
+		return 0;
+	}
 
-    // Cas 1 
-    // LCP
+    // Search for an approximate period
+	int approx_period = findApproximatePeriod(size_pattern, pattern,
+						k_nb_letters, 1, error_k, 8*error_k);
 
-    // Cas 2
-    // Creation T* et P*
-    cout << "period : " << approx_period << endl;
-    Rle *t_prime = new Rle(approx_period, k_nb_letters);
-    int32_t i_l, i_r;
-    t_prime->RleText(size_pattern, size_text, text, error_k, &i_l, &i_r);
-    cout << "construction done" << endl;
-    t_prime->PrintRle();
-    cout << "i_l " << i_l << " i_r " << i_r << endl;
+	//  Case 1 in the paper 
+	if (approx_period == 0) {  
+		cout << endl << "No Small 4k-period" << endl << endl;
+		NoSmall4kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, 
+					error_k, size_res, res);
+	}
+	else {  // There is a 8k-period <= k, case 2 in the paper
+		cout << endl << "There is a small 8k-period" << endl << endl;
+		Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k, 
+						approx_period, size_res, res);
+	}
 
-    int32_t size_padding = (i_r - i_l + 1) - size_pattern;
-    Rle *p_rle = new Rle(approx_period, k_nb_letters);
-    p_rle->RlePattern(size_pattern, pattern, size_padding);
-    cout << "constr P* done" << endl;
-    p_rle->PrintRle();
-    int32_t size_res_star = t_prime->Size() * 2 - p_rle->Size();
-    int *res_star = new int[size_res_star];
-
-
-    char *t_star, *p_star;
-    int32_t size_t_star, size_p_star;
-    t_prime->ToString(&size_t_star, &t_star);
-    cout << "T* ";
-    for (int i = 0; i < size_t_star; ++i)
-		cout << t_star[i];
-	cout << endl;
-    p_rle->ToString(&size_p_star, &p_star);
-	cout << "P* " ;
-	for (int i = 0; i < size_p_star; ++i)
-		cout << p_star[i];
-	cout << endl;
-
-
-    // cout << "nb a " << t_prime->NbLettersRuns('a') << endl;
-    // cout << "nb b " << t_prime->NbLettersRuns('b');
-    // cout << "nb c " << t_prime->NbLettersRuns('c');
-
- //    int threshold = 3;
-
- //    int32_t size_fft = UpperPowOfTwo(size_text);
- //    FFT_wak *fft_text = new FFT_wak(size_fft);
-	// FFT_wak *fft_pattern = new FFT_wak(size_fft);
-	// FFT_wak *fft_res = new FFT_wak(size_fft, false);
-
-
- //    for (int i = 0; i < k_nb_letters; ++i) {
- //    	if (p_star->NbLettersRuns(IntToChar(i)) > threshold ) { //  heavy letter 
- //    		fft_text->MatchLetters(IntToChar(i), t_prime);
- //    		fft_pattern->MatchLetters(IntToChar(i),p_star);
- //    		fft_pattern->ReversePolynome(p_star->Size());
- //    		fft_text->ExecFFT();
-	// 		fft_pattern->ExecFFT();
- //    		fft_res->FFTMultiplication(fft_text, fft_pattern);
- //    		fft_res->ExecFFT();
-
- //    		for (int i = 0; i < size_res_star ; ++i)
- //    			res_star[i] += (fft_res->getVal(i+p_star->Size()-1)+0.5);
- //    	}
- //    	else {  // light letter
-
- //    	}
- //    }
-    // Tri character freq / infreq
-
-    // Freq : HD
-
-    // Infreq : pour faire lettre infreq, faire la liste des run qui la contiennent dans P*
-    // scanner T*
-    // 		pour chaque lettre alpha
-    //			pour chaque run contenant alpha de P*
-    // 				???
-
-
+    WriteOuput(size_res, res, error_k, stream_out);
 
     end = chrono::system_clock::now();
     texec = end-start;
     cout << endl << "Total time : " << texec.count() << "s" << endl;
 
+    stream_out.close();
+
+    delete [] text;
+    delete [] pattern;
+    delete [] res;
 
     return 0;
 }

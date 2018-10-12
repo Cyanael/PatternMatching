@@ -1,59 +1,81 @@
 /* Copyright : ???
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
-This file contains the Hamming distance algorithm 
-used when there is at most 2*sqrt(k) frequent symbols.
+Compilation :
+install the fftw3 library
+g++ -std=c++11 approxHamDist.cpp Fft_wak.cpp -o ahd -lfftw3 -lm
+
+Execution :
+./hd text.in pattern.in errorDistance -o optional.out -p plan -c constante_loop
+The pattern/text input file must contain its lenght then the pattern/text
 */
 
-#ifndef HAMMINGDISTANCE_H
-#define HAMMINGDISTANCE_H
 
-#include <iostream>
+#ifndef ApproxHD_HPP
+#define ApproxHD_HPP
+
 #include <vector>
-#include <cmath>
-#include <cstdint>
-#include <chrono>
-#include <unistd.h>
-
-extern "C" {
-	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
-}
+#include <algorithm>
 
 #include "Fft_wak.hpp"
 
 using namespace std;
 
 
+void MapLetters(int k_nb_letters, int size_alphabet, int size_prime_number,
+                int *prime_numbers, int *map);
 
-void InitTabZeros(int32_t size, int32_t *tab);
+char CharMap(char letter, int *map);
 
-bool IsInfreq(char letter, vector<int32_t> *infreq);
+bool SortVectorOfPair(pair<char, int> a, pair<char, int> b);
+
+void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
+            int *map, int size_alphabet, vector<char> *freq,
+                        vector<int32_t> *infreq);
+
+void SortFreqCaract(int32_t size_pattern, char *pattern, int k_nb_letters, float limit,
+            int *map, int size_alphabet, vector<char> *freq);
+
+bool IsInfreq(char letter, vector<int32_t> *infreq) ;
+
+// Computes the boolean vector of the text
+// when there is a 1 where the matching letter is "letter"
+void MatchLetterTextApprox(int32_t size, char *text, char letter,
+          int *map, FFT_wak *fft_text);
 
 // Computes the boolean vector of the text
 // when there is a 1 where the matching letter is "letter"
 void MatchLetterText(int32_t size, char *text, char letter,
-					FFT_wak *fft_text);
+          FFT_wak *fft_text);
 
 void ReversePattern(int32_t size, FFT_wak *fft_pattern);
 
-// input : infreq contains the occurences of all pattern letters
-// separate the frequent charaters in freq
-// and the infreq characters and theirs occurences in infreq
-void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float threshold_freq,
-						vector<char> *freq, vector<int32_t> *infreq, int size_alphabet);
-
 void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
-				char *text, char *pattern, vector<char> *frequent,
-				FFT_wak *fft_text, FFT_wak *fft_pattern, FFT_wak *fft_res,
-				int *res);
+        char *text, char *pattern, vector<char> *frequent, int *map,
+        FFT_wak *fft_text, FFT_wak *fft_pattern, FFT_wak *fft_res,
+        int *res);
 
 void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
-				vector<int32_t> *infreq, int *res);
+        int *map, vector<int32_t> *infreq, int *res);
+
+void KeepSmaller(int32_t size_res, int *tmp_res, int *res);
+
+void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
+            char *pattern, int k_nb_letters, float epsilon,
+            int32_t size_res, int *res);
+
+int findApproximatePeriod(int32_t size_pattern, char *pattern,  int k_nb_letters,
+                          float epsilon, int position_max, int value_max);
+
+void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
+                      char *pattern, int k_nb_letters, int error_k,
+                      int32_t size_res, int *res) ;
+
+void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern, 
+         vector<char> *frequent, int32_t size_res, int *res);
+
+int NaiveHD(char *text, int32_t size_pattern, char *pattern, int32_t pos);
 
 
-void ComputeHD(int32_t size_text, char *text, int32_t size_pattern, 
-						char *pattern, vector<int32_t> *infrequent, 
-						float threshold_freq, int size_alphabet, 
-						int32_t size_res, int *res);
 
-#endif  // HAMMINGDISTANCE_K
+#endif  // ApproxHD_HPP

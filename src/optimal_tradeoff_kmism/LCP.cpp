@@ -5,7 +5,7 @@ SA &  LCP : https://www.geeksforgeeks.org/%C2%AD%C2%ADkasais-algorithm-for-const
 
 
 This file contains the kangaroo algorithm
-used when there is more than 2*sqrt(k) frequent symbols.
+used when the approximate 2k-period is greater than k.
 */
 
 
@@ -15,6 +15,7 @@ used when there is more than 2*sqrt(k) frequent symbols.
 
 #include "LCP.hpp"
 #include "Tools.hpp"
+
 
 // Structure to store information of a suffix
 struct suffix {
@@ -187,90 +188,44 @@ int Query(int* lcp, vector<int>* lu, int pos_start, int pos_end) {
 
 void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
                 int* inv_suff_array, int* lcp, vector<int>* lu,
-                int32_t size_res, int nb_error_max, int *dk, int* res) {
+                int32_t size_res, int nb_error_max, vector<int32_t> pos_to_search, int* res) {
     int32_t current_pos_p;
     int32_t current_pos_t;
     int current_nb_error;
     int pas;
     int start, end;
-    for (int32_t i = 0; i < size_res; ++i) {
-        if (dk[i] < nb_error_max)
-            res[i] = -1;
-        else {
-            current_pos_p = 0;
-            current_pos_t = i;
-            current_nb_error = 0;
-            while (current_nb_error < nb_error_max) {
-                start = inv_suff_array[current_pos_t];
-                end = inv_suff_array[current_pos_p+size_text];
-                pas = Query(lcp, lu, min(start, end), max(start, end)-1);
-                current_pos_t += pas+1;
-                current_pos_p += pas+1;
-                if (current_pos_p >= size_pattern)
-                    break;
-                current_nb_error++;
-            }
-
-            if (current_pos_p < size_pattern)
-                res[i] = -1;
-            else if (current_pos_p == size_pattern)
-                res[i] = current_nb_error+1;
-            else
-                res[i] = current_nb_error;
+    for (int i = 0; i < pos_to_search.size(); ++i) {
+        current_pos_p = 0;
+        current_pos_t = pos_to_search[i];
+        current_nb_error = 0;
+        while (current_nb_error <= nb_error_max) {
+            start = inv_suff_array[current_pos_t];
+            end = inv_suff_array[current_pos_p+size_text];
+            pas = Query(lcp, lu, min(start, end), max(start, end)-1);
+            current_pos_t += pas+1;
+            current_pos_p += pas+1;
+            if (current_pos_p >= size_pattern)
+                break;
+            current_nb_error++;
         }
+
+        if (current_pos_p < size_pattern)
+            res[pos_to_search[i]] = -1;
+        else if (current_pos_p == size_pattern)
+            res[pos_to_search[i]] = current_nb_error+1;
+        else
+            res[pos_to_search[i]] = current_nb_error;
     }
 }
 
 
-bool IsFreq(char letter, vector<int32_t> *freqChar) {
-    if (freqChar[CharToInt(letter)].size() > 0)
-        return true;
-    return false;
-}
-
-
-void SortfreqInfreqCaract(int32_t size_pattern, char *pattern,
-                        float threshold_freq, vector<int32_t> *infreq,
-                        int size_alphabet) {
-    int nb_char_selected = 0, i = 0;
-
-    for (int i= 0; i< size_alphabet; ++i) {
-        if (infreq[i].size() >= threshold_freq &&
-            nb_char_selected < 2*threshold_freq) {
-            infreq[i].erase(infreq[i].begin() + ceil(threshold_freq),
-                            infreq[i].end());
-            nb_char_selected++;
-        } else
-            infreq[i].clear();
-    }
-}
-
-void InterestingPosition(int32_t size_text, char *text,
-                        vector<int32_t> *freqChar, float threshold_freq,
-                        int32_t size_res, int *dk) {
-int pos_in_pat;
-    for (int i = 0; i < size_text; ++i) {
-        if (IsFreq(text[i], freqChar))
-            for (int j = 0; j < freqChar[CharToInt(text[i])].size() ; ++j) {
-                pos_in_pat = freqChar[CharToInt(text[i])][j];
-                if (i - pos_in_pat >=0 && i - pos_in_pat < size_res) {
-                    dk[i - pos_in_pat]++;
-                }
-            }
-    }
-}
-
-
-void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
-                        char *pattern, vector<int32_t> *freqChar,
-                        float threshold_freq, int size_alphabet,
-                        int nb_error_max, int32_t size_res, int *res) {
+void LCP(int32_t size_text, char *text, int32_t size_pattern,
+                        char *pattern, int size_alphabet,
+                        int nb_error_max, vector<int32_t> pos_to_search, 
+                        int32_t size_res, int *res) {
     chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec, tinit;
     start = chrono::system_clock::now();
-
-    SortfreqInfreqCaract(size_pattern, pattern, threshold_freq,
-                        freqChar, size_alphabet);
 
     char *text_pattern;
     ConcatTextPattern(size_text, text, size_pattern, pattern, &text_pattern);
@@ -281,28 +236,28 @@ void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
 
     end = chrono::system_clock::now();
     texec = end-start;
-    cout << "   Text-Pattern : " << texec.count() << endl;
+    // cout << "   Text-Pattern : " << texec.count() << endl;
     mid = end;
 
     BuildSuffixArray(text_pattern, size_suff_array, &suff_array);
 
     end = chrono::system_clock::now();
     texec = end-mid;
-    cout << "   SA : " << texec.count() << endl;
+    // cout << "   SA : " << texec.count() << endl;
     mid = end;
 
     BuildInvSuffArray(size_suff_array, suff_array, &inv_suff_array);
 
     end = chrono::system_clock::now();
     texec = end-mid;
-    cout << "   ISA : " << texec.count() << endl;
+    // cout << "   ISA : " << texec.count() << endl;
     mid = end;
 
     int *lcp = new int[size_suff_array]();
     Kasai(text_pattern, size_suff_array, suff_array, &lcp, inv_suff_array);
     end = chrono::system_clock::now();
     texec = end-mid;
-    cout << "   LCP : " << texec.count() << endl;
+    // cout << "   LCP : " << texec.count() << endl;
     mid = end;
 
     vector<int> *lu = new vector<int>[size_suff_array]();
@@ -310,20 +265,23 @@ void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
 
     end = chrono::system_clock::now();
     texec = end-mid;
-    cout << "   LU : " << texec.count() << endl;
+    // cout << "   LU : " << texec.count() << endl;
     mid = end;
     end = chrono::system_clock::now();
     texec = end-start;
-    cout << "Init : " << texec.count() << endl;
+    // cout << "Init : " << texec.count() << endl;
     mid = end;
 
-
-    int *dk = new int[size_res]();
-    InterestingPosition(size_text, text, freqChar, threshold_freq,
-                        size_res, dk);
+    for (int i = 0; i < size_res; ++i)
+        res[i] = nb_error_max + 1;
 
     Kangaroo(size_text, size_pattern, size_suff_array, inv_suff_array, lcp,
-                lu, size_res, nb_error_max, dk, res);
+                lu, size_res, nb_error_max, pos_to_search, res);
+
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << "Queries : " << texec.count() << endl;
+    mid = end;
 
     delete [] text_pattern;
     delete [] suff_array;
@@ -332,5 +290,4 @@ void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
     for (int i=0; i<size_suff_array; ++i)
         lu[i].clear();
     delete [] lu;
-    delete [] dk;
 }
