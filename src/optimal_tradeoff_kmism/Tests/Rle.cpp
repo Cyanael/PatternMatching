@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <cassert>
+#include <unistd.h>
 
 #include "Rle.hpp"
 #include "Tools.hpp"
@@ -95,7 +97,7 @@ Rle::Rle(int p) {
         rle[i] = (*list_run);
     }
     rle_ = rle;
-} 
+}
 
 RleText::RleText(int p) : Rle(p) {
     list<RunRle*> *t_sec = new list<RunRle*>[p]();
@@ -212,31 +214,23 @@ list<RunRle*>* RleText::GetListTSec(int period) const {
 
 
 bool Usage() {
-    cout << endl << "How to run: ./exec size_text size_pattern error -p optinalPlan" << endl;
+    cout << endl << "How to run: ./exec size_text size_pattern error min_run";
+    cout << " max_run pas_run -p optimalPlan" << endl;
 }
 
-
-
-void Rle::MakePattern(int32_t size_pattern, int min_run) {
-    size_ = size_pattern;
-    RunRle *run1 = new RunRle('a');
-    rle_[0].push_back(run1);
-    for (int i = 0; i < min_run -1; ++i) {
-        RunRle *run3 = new RunRle('b');
-        rle_[0].push_back(run3); 
-        RunRle *run4 = new RunRle('a');
-        rle_[0].push_back(run4);
-    }
-
-    RunRle *run2 = new RunRle('b');
-    run2->ExtendRunEnd(size_pattern - 2 * min_run);
-    rle_[1].push_back(run2);
+void LoadSavedPlan(char* file) {
+	int res = 0;
+	res = fftw_import_wisdom_from_filename(file);
+	if (res != 0)
+		cout << "Loading plans from " << file << " succeed."<< endl;
+	else
+		cout << "Error while loading plans from " << file << endl;
 }
 
 void Rle::UpdateRle(int pas_run) {
     for (int i = 0; i < pas_run; ++i) {
         RunRle *run3 = new RunRle('b');
-        rle_[0].push_back(run3); 
+        rle_[0].push_back(run3);
         RunRle *run4 = new RunRle('a');
         rle_[0].push_back(run4);
     }
@@ -268,46 +262,74 @@ void RleText::SetPositionRuns() {
     for (int i = 0; i < period_; ++i) {
         for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it) {
             (*it)->SetPosition(pos);
-            pos += (*it)->GetSize();    
+            pos += (*it)->GetSize();
         }
     }
     for (int i = 0; i < period_; ++i) {
         for (std::list<RunRle*>::iterator it = t_sec_[i].begin(); it != t_sec_[i].end(); ++it) {
             (*it)->SetPosition(pos);
-            pos += (*it)->GetSize();    
+            pos += (*it)->GetSize();
         }
     }
 }
 
-
-void RleText::MakeText(int32_t size_text) {
+void RleText::MakeText(int32_t size_text, int nb_runs) {
+    // size_ = size_text;
+    // int r, s = -1;
+    // int nb_runs = 0;
+    // for (int32_t i = 0; i < size_text - 1; ++i) {
+    //     r = rand()%2;
+    //     if ( r == s)
+    //         rle_[0].back()->ExtendRunEnd();
+    //     else {
+    //         RunRle *run = new RunRle(IntToChar(r));
+    //         rle_[0].push_back(run);
+    //         nb_runs++;
+    //     }
+    //     s = r;
+    // }
+    // r = rand()%2;
+    // RunRle *run = new RunRle(IntToChar(r));
+    // rle_[1].push_back(run);
+    // nb_runs++;
     size_ = size_text;
-    int r, s = -1;
-    int nb_runs = 0;
-    for (int32_t i = 0; i < size_text - 1; ++i) {
-        r = rand()%2;
-        if ( r == s)
-            rle_[0].back()->ExtendRunEnd();
-        else {
-            RunRle *run = new RunRle(IntToChar(r));
-            rle_[0].push_back(run);
-            nb_runs++;        
-        }
-        s = r;
-    }
-    r = rand()%2;
-    RunRle *run = new RunRle(IntToChar(r));
-    rle_[1].push_back(run);
-    nb_runs++;
+    int32_t size_to_do = min(size_text, nb_runs);
 
+    RunRle *run1 = new RunRle('a');
+    rle_[0].push_back(run1);
+    for (int i = 0; i < size_to_do/2 -1; ++i) {
+        RunRle *run3 = new RunRle('b');
+        rle_[0].push_back(run3);
+        RunRle *run4 = new RunRle('a');
+        rle_[0].push_back(run4);
+    }
+
+    RunRle *run2 = new RunRle('b');
+    if (size_to_do < size_text)
+        run2->ExtendRunEnd(size_text - size_to_do);
+    rle_[1].push_back(run2);
 
     // concatenate T"
     ConcatTSec();
     //  puts the position where the run starts in T*
     SetPositionRuns();
-    cout << "nb runs T = " << nb_runs*2 << endl;
+    // cout << "nb runs T = " << 8*error*2 << endl;
 }
 
+void Rle::MakePattern(int32_t size_pattern, int nb_runs) {
+    size_ = size_pattern;
+    RunRle *run1 = new RunRle('a');
+    rle_[0].push_back(run1);
+    for (int i = 0; i < size_pattern/2 -1; ++i) {
+        RunRle *run3 = new RunRle('b');
+        rle_[0].push_back(run3);
+        RunRle *run4 = new RunRle('a');
+        rle_[0].push_back(run4);
+    }
+
+    RunRle *run2 = new RunRle('b');
+    rle_[1].push_back(run2);
+}
 
 void Rle::DoString(int32_t *size, char **str) const {
     (*size) = size_;
@@ -324,7 +346,7 @@ void Rle::DoString(int32_t *size, char **str) const {
             }
         }
     }
-}   
+}
 
 int32_t Rle::GetSize() const {
     return size_;
@@ -375,10 +397,12 @@ int main(int argc, char* argv[]) {
                     // char *pattern, int k_nb_letters, int error_k, int approx_period,
                     // int32_t size_res, int *res
 
-    if (argc < 7) {
+    if (argc < 4) {
         Usage();
         return 0;
     }
+
+
     chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
@@ -386,18 +410,31 @@ int main(int argc, char* argv[]) {
 
     int32_t size_text = atoi(argv[1]);
     int32_t size_pattern = atoi(argv[2]);
-    int error_k = atoi(argv[3]);
-    int min_run = atoi(argv[4]);
-    int max_run = atoi(argv[5]);
-    int pas_run = atoi(argv[6]);
+    int nb_runs = atoi(argv[3]);
+    assert(size_pattern <= nb_runs && "size_pattern doit etre plus grand ou egal au nb de runs");
+    // int min_run = atoi(argv[4]);
+    // int max_run = atoi(argv[5]);
+    // int pas_run = atoi(argv[6]);
+
+    char c;
+	while((c = getopt(argc, argv, "p:o:")) !=EOF) {
+		switch (c) {
+			case 'p':
+				LoadSavedPlan(optarg);
+				break;
+			default:
+				Usage();
+				break;
+		}
+	}
 
     RleText *t_rle = new RleText(2);  // T* stored as RLE blocks
-    t_rle->MakeText(size_text);
+    t_rle->MakeText(size_text, nb_runs);
     // cout << "T : " << endl;
     // t_rle->PrintRle();
 
     Rle *p_rle = new Rle(2);  // P* stored as RLE blocks
-    p_rle->MakePattern(size_pattern, min_run);
+    p_rle->MakePattern(size_pattern, nb_runs);
     // cout << "P : " << endl;
     // p_rle->PrintRle();
 
@@ -408,7 +445,6 @@ int main(int argc, char* argv[]) {
 		infreq[i] = l;
 	}
 
-	char c;
 	// sort the pattern runs by letter, put them all in infreq
     for (int i = 0; i < 2; ++i) {
     	for (std::list<RunRle*>::iterator it = p_rle->GetList(i)->begin(); it != p_rle->GetList(i)->end(); ++it) {
@@ -423,7 +459,7 @@ int main(int argc, char* argv[]) {
     freq.push_back('a');
     freq.push_back('b');
 
-    for (int i = min_run; i < max_run; i = i + pas_run) {
+    // for (int i = min_run; i < max_run; i = i + pas_run) {
 
         mid = chrono::system_clock::now();
 
@@ -478,11 +514,11 @@ int main(int argc, char* argv[]) {
         texec = end-mid;
         cout << "Rle : " << texec.count() << "s" << endl;
         mid= end;
-    
 
-        p_rle->UpdateRle(pas_run);
 
-    }
+        // p_rle->UpdateRle(pas_run);
+
+    // }
 
 
  //    delete [] t_star;
