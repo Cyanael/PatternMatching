@@ -83,7 +83,7 @@ Rle::Rle(int p) {
 		rle[i] = (*list_run);
 	}
 	rle_ = rle;
-} 
+}
 
 Rle::~Rle() {
 	for (int i = 0; i < period_; ++i)
@@ -158,7 +158,7 @@ void Rle::SetPositionRuns() {
 	for (int i = 0; i < period_; ++i) {
 		for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it) {
 			(*it)->SetPosition(pos);
-			pos += (*it)->GetSize();	
+			pos += (*it)->GetSize();
 		}
 	}
 }
@@ -190,7 +190,7 @@ RleText::RleText(int p) : Rle(p) {
 		t_sec[i] = (*liste);
 	}
 	t_sec_ = t_sec;
-} 
+}
 
 RleText::~RleText() {
 	for (int i = 0; i < period_; ++i) {
@@ -207,7 +207,7 @@ void RleText::ReorganiseListRun(int32_t step) {
 
 	list<RunRle*> tmp_list = rle_[0];
 	int pos = 0;
-	
+
 	if (step%2 == 0) {
 		list<RunRle*> tmp_list1 = rle_[1];
 		for (int i = 0; i < period_/2-1; ++i) {
@@ -253,13 +253,13 @@ void RleText::SetPositionRuns() {
 	for (int i = 0; i < period_; ++i) {
 		for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it) {
 			(*it)->SetPosition(pos);
-			pos += (*it)->GetSize();	
+			pos += (*it)->GetSize();
 		}
 	}
 	for (int i = 0; i < period_; ++i) {
 		for (std::list<RunRle*>::iterator it = t_sec_[i].begin(); it != t_sec_[i].end(); ++it) {
 			(*it)->SetPosition(pos);
-			pos += (*it)->GetSize();	
+			pos += (*it)->GetSize();
 		}
 	}
 }
@@ -270,7 +270,7 @@ void RleText::MakeRle(int32_t size_pattern, int32_t size_text, char *text,
 	int nb_runs = 0;
 
 	//  extend the text from m to the left : gives us i_l
-	while (i >= 0 && nb_runs <= nb_errors * 2) {  //  TODO : remettre 6
+	while (i >= 0 && nb_runs <= (nb_errors * 2)) {  //  TODO : remettre 6
 		p = i % period_;
 		nb_runs += AddLetterBegin(i, p, text[i]);
 		i--;
@@ -284,7 +284,7 @@ void RleText::MakeRle(int32_t size_pattern, int32_t size_text, char *text,
 		p = i % period_;
 		nb_runs += AddLetterEnd(i, p, text[i]);
 		i++;
-		if (nb_runs >= nb_errors * 4 && i_r - i_l + 1 % period_ == 0)   //  TODO : remettre 12
+		if (nb_runs >= (nb_errors * 4) && (i_r - i_l + 1) % period_ == 0)   //  TODO : remettre 12
 			continu = false;
 	}
 	(*i_r) = i - 1;
@@ -349,7 +349,7 @@ void Rle::DoString(int32_t *size, char **str) const {
     		}
     	}
 	}
-}	
+}
 
 void RleText::DoString(int32_t *size, char **str) const {
 	(*size) = size_;
