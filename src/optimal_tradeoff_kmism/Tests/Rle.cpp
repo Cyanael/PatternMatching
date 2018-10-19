@@ -292,8 +292,8 @@ void RleText::MakeText(int32_t size_text, int nb_runs) {
     // RunRle *run = new RunRle(IntToChar(r));
     // rle_[1].push_back(run);
     // nb_runs++;
-    size_ = size_text;
-    int32_t size_to_do = min(size_text, nb_runs);
+    size_ = size_text/2;
+    int32_t size_to_do = min(size_text/2, nb_runs);
 
     RunRle *run1 = new RunRle('a');
     rle_[0].push_back(run1);
@@ -305,8 +305,8 @@ void RleText::MakeText(int32_t size_text, int nb_runs) {
     }
 
     RunRle *run2 = new RunRle('b');
-    if (size_to_do < size_text)
-        run2->ExtendRunEnd(size_text - size_to_do);
+    if (size_to_do < size_text/2)
+        run2->ExtendRunEnd(size_text/2 - size_to_do);
     rle_[1].push_back(run2);
 
     // concatenate T"
@@ -393,10 +393,6 @@ void UpdateDeriv(RunRle *runT, RunRle *runP, int32_t size_deriv, int *deriv) {
 
 int main(int argc, char* argv[]) {
 
-// int32_t size_text, char *text, int32_t size_pattern,
-                    // char *pattern, int k_nb_letters, int error_k, int approx_period,
-                    // int32_t size_res, int *res
-
     if (argc < 4) {
         Usage();
         return 0;
@@ -457,20 +453,24 @@ int main(int argc, char* argv[]) {
  //    int threshold = 1;
 	vector<char> freq;
     freq.push_back('a');
-    freq.push_back('b');
+    // freq.push_back('b');
 
-    // for (int i = min_run; i < max_run; i = i + pas_run) {
+    int32_t size_t_star, size_p_star;
+    int32_t size_res_star = t_rle->GetSize() - p_rle->GetSize() + 1;
+    int *res_hd = new int[size_res_star];
+
+    float ave_time_hd = 0;
+    int nb_loops = 10;
+    for (int i = 0; i < nb_loops; ++i) {
 
         mid = chrono::system_clock::now();
 
-    	// //init T* and P*
+        // //init T* and P*
         char *t_star, *p_star;
-        int32_t size_t_star, size_p_star;
         t_rle->DoString(&size_t_star, &t_star);
         p_rle->DoString(&size_p_star, &p_star);
 
-        int32_t size_res_star = t_rle->GetSize() - p_rle->GetSize() + 1;
-        int *res_hd = new int[size_res_star];
+
 
         // Frequent letters
         HD(size_t_star, t_star, size_p_star,  p_star, &freq,
@@ -478,16 +478,28 @@ int main(int argc, char* argv[]) {
 
         end = chrono::system_clock::now();
         texec = end-mid;
-        cout << "HD : " << texec.count() << "s" << endl;
+        // cout << "HD : " << texec.count() << "s" << endl;
         mid= end;
+        ave_time_hd += texec.count();
 
+    }
+    ave_time_hd /= nb_loops;
+    cout << "HD moyen  = " << ave_time_hd << endl; 
+
+
+    float ave_time_rle = 0;
+    int32_t size_deriv = size_res_star;
+    int *deriv = new int[size_deriv];
+    int *res_star = new int[size_res_star];
+    
+    for (int i = 0; i < nb_loops; ++i) {
+
+        mid = chrono::system_clock::now();
         // Infrequent letters
-    	RunRle *runP;
-    	int32_t size_deriv = size_res_star;
-        int *deriv = new int[size_deriv];
+        RunRle *runP;
         InitTabZeros(size_deriv, deriv);
-        int *res_star = new int[size_res_star];
         InitTabZeros(size_res_star, res_star);
+        int nb_pair = 0;
 
         // compute pair of runs in T' and P*
         for (int i = 0; i < 2; ++i) {
@@ -496,6 +508,7 @@ int main(int argc, char* argv[]) {
         		for (int k = 0; k < infreq[CharToInt(c)].size(); ++k) {
         			runP = infreq[CharToInt(c)][k];
         			UpdateDeriv((*it), runP, size_deriv, deriv);
+                    nb_pair++;
         		}
         	}
         }
@@ -506,19 +519,26 @@ int main(int argc, char* argv[]) {
         		for (int k = 0; k < infreq[CharToInt(c)].size(); ++k) {
         			runP = infreq[CharToInt(c)][k];
         			UpdateDeriv((*it), runP, size_deriv, deriv);
+                    nb_pair++;
         		}
         	}
         }
+        cout << "nb de pairs " << nb_pair << endl;
 
         end = chrono::system_clock::now();
         texec = end-mid;
-        cout << "Rle : " << texec.count() << "s" << endl;
+        // cout << "Rle : " << texec.count() << "s" << endl;
         mid= end;
 
 
         // p_rle->UpdateRle(pas_run);
+        ave_time_rle += texec.count();
 
-    // }
+    }
+
+    
+    ave_time_rle /= nb_loops*2;
+    cout << "HD moyen  = " << ave_time_rle << endl; 
 
 
  //    delete [] t_star;
