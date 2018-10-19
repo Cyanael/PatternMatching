@@ -177,7 +177,7 @@ void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
     if (IsInfreq(CharMap(text[i], map), infreq)) {
       current_val = map[CharToInt(text[i])];
       for (int32_t j = 0; j < infreq[current_val].size(); ++j) {
-        if ((i >= infreq[current_val][j]) && (i-infreq[current_val][j] < size_res)) { 
+        if ((i >= infreq[current_val][j]) && (i-infreq[current_val][j] < size_res)) {
           res[i-infreq[current_val][j]]++;
         }
       }
@@ -248,7 +248,7 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
     // Sort P's caracteres in frequent/infrequent caractere
     SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
                             size_alphabet, &frequent, infrequent);
-    
+
     SortFreqCaract(size_pattern, pattern, k_nb_letters, threshold_freq, map,
                               size_alphabet, &frequent);
 
@@ -315,6 +315,11 @@ int FindApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
     pattern2[i] = '$';
 
   ApproxHD(size_pattern2, pattern2, size_pattern, pattern, k_nb_letters, (float)1, size_res, res);
+  cout << "approx res :" << endl;
+  for (int i = 0; i < size_res; ++i)
+    cout << res[i] << " ";
+  cout << endl;
+
 
   for (int i = 1; i <= position_max && size_res; ++i){
     appr_res[i] = res[i];
@@ -324,7 +329,64 @@ int FindApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
     for (int i = size_res; i < position_max; ++i)
       appr_res[i] = value_max;
 
-  delete [] pattern2;
-  delete [] res;
+  // delete [] pattern2;
+  // delete [] res;
 }
 
+
+void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
+         vector<char> *frequent, int32_t size_res, int *res) {
+  InitTabZeros(size_res, res);
+
+  int32_t size_fft = UpperPowOfTwo(size_text);
+  FFT_wak *fft_text = new FFT_wak(size_fft);
+  FFT_wak *fft_pattern = new FFT_wak(size_fft);
+  FFT_wak *fft_res = new FFT_wak(size_fft, false);
+
+  chrono::time_point<chrono::system_clock> start, mid, end;
+  chrono::duration<double> texec;
+  char current_char;
+
+  for (auto j = frequent->begin(); j != frequent->end(); ++j) {
+    current_char = *j;
+
+    start = chrono::system_clock::now();
+    MatchLetterText(size_text, text, current_char, fft_text);
+    MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << " bit vect : " << texec.count() << "s" << endl;
+    mid = end;
+
+    ReversePattern(size_pattern, fft_pattern);
+    fft_text->ExecFFT();
+    fft_pattern->ExecFFT();
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << " fft exec : " << texec.count() << "s" << endl;
+    mid = end;
+
+    fft_res->FFTMultiplication(fft_text, fft_pattern);
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    // cout << " mult + iexec : " << texec.count() << "s" << endl;
+    mid = end;
+
+    fft_res->ExecFFT();
+
+    for (int32_t i = 0; i < size_res; ++i) {
+      // sometime, the double variable is close to an integer
+      // but a little inferior, the +0,5 corrects the cast into an integer
+      res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
+    }
+
+      end = chrono::system_clock::now();
+      texec = end-mid;
+      // cout << " write res : " << texec.count() << "s" << endl;
+      mid = end;
+  }
+
+    delete fft_text;
+    delete fft_pattern;
+    delete fft_res;
+}

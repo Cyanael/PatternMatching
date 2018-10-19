@@ -87,7 +87,7 @@ Rle::Rle(int p) {
 		rle[i] = (*list_run);
 	}
 	rle_ = rle;
-} 
+}
 
 Rle::~Rle() {
 	//  TODO
@@ -166,7 +166,7 @@ void Rle::SetPositionRuns() {
 	for (int i = 0; i < period_; ++i) {
 		for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it) {
 			(*it)->SetPosition(pos);
-			pos += (*it)->GetSize();	
+			pos += (*it)->GetSize();
 		}
 	}
 }
@@ -182,7 +182,7 @@ RleText::RleText(int p) : Rle(p) {
 		t_sec[i] = (*liste);
 	}
 	t_sec_ = t_sec;
-} 
+}
 
 RleText::~RleText() {
 	//  TODO
@@ -190,7 +190,7 @@ RleText::~RleText() {
 	// 	for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it)
 	// 		delete (*it);
 	// 	rle_[i].clear();
-		
+
 	// 	for (std::list<RunRle*>::iterator it = t_sec_[i].begin(); it != t_sec_[i].end(); ++it)
 	// 		delete (*it);
 	// 	t_sec_[i].clear();
@@ -220,16 +220,10 @@ void RleText::MakeRle(int32_t size_pattern, int32_t size_text, char *text,
 		p = i % period_;
 		nb_runs += AddLetterEnd(i, p, text[i]);
 		i++;
-		if (nb_runs >= nb_errors * 2 * max_runs && i_r - i_l + 1 % period_ == 0)
+		if (nb_runs >= (nb_errors * 2 * max_runs) && (i_r - i_l + 1) % period_ == 0)
 			continu = false;
 	}
 	(*i_r) = i - 1;
-	//pad with # until having a lenght divisible by period
-	while ((i - (*i_l)) % period_ != 0) {
-		p = i % period_;
-		AddLetterEnd(i, p, '#');
-		i++;
-	}
 }
 
 
@@ -302,7 +296,7 @@ void Rle::DoString(int32_t *size, char **str) const {
     		}
     	}
 	}
-}	
+}
 
 void RleText::DoString(int32_t *size, char **str) const {
 	(*size) = size_;

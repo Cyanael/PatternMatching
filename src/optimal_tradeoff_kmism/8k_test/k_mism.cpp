@@ -124,55 +124,86 @@ int main(int argc, char* argv[]) {
     // Search for an approximate period
 	FindApproximatePeriod(size_pattern, pattern,
 						k_nb_letters, 1, error_k, 8*error_k, appr_res);
+
 	int approx_period = 0;
 	int32_t i_l, i_r;
 
 
-	int naif_res;
-	int32_t min = size_text, max = 0;
-	for (int i = 0; i < size_text - size_pattern; ++i) {
-		naif_res = 0;
-		for (int j = 0; j < size_pattern && naif_res <= error_k; ++j) {
-			if (pattern[j] != text[i + j]) {
-				naif_res++;
-			}
+	int32_t size_res = size_text - size_pattern +1;
+	int *naif_res = new int[size_res];
+
+	bool *alphabet = new bool[k_nb_letters];
+	for (int i = 0; i < k_nb_letters; ++i)
+		alphabet[i] = false;
+	for (int i = 0; i < size_pattern; ++i)
+		alphabet[CharToInt(pattern[i])] = true;
+
+	vector<char> freq;
+	for (int i = 0; i < k_nb_letters; ++i)
+		if (alphabet[i] == true) {
+			freq.push_back(IntToChar(i));
 		}
-		if (naif_res <= error_k) {
-			if (min > i)
-				min = i;
-			max = i;
-		}
+
+	HD(size_text, text, size_pattern, pattern, &freq, size_res, naif_res);
+
+	// for (int i = 0; i < size_res; ++i) {
+	// 	cout << (size_pattern - naif_res[i]) <<  " ";
+	// }
+	// cout << endl;
+
+	int32_t min = size_res, max = -1;
+
+	int32_t cpt = 0;
+	while(cpt < size_res && min == size_res) {
+		if ((size_pattern - naif_res[cpt]) <= error_k)
+			min = cpt;
+		cpt++;
 	}
+
+	cpt = size_res -1;
+	while(cpt > -1 && max == -1) {
+		if ((size_pattern - naif_res[cpt]) <= error_k)
+			max = cpt;
+		cpt--;
+	}
+
 	cout << "min : " << min << "	max : " << max << endl;
 
 
 	for (int i = 8; i >= 1; --i) {
 
 		for (int j = 1; j < error_k; ++j) {
-			if (appr_res[j] < error_k * i) {
+			if ((size_pattern - appr_res[j]) < error_k * i) {
 				approx_period = j;
 				break;
 			}
 		}
+		cout << "approx period : pos " << approx_period << " = " << appr_res[approx_period] << endl;
 
-		for (int j= 11; j >= 1; --j) {
-			if (approx_period != 0) {  // There is a 8k-period <= k, case 2 in the paper
-				Small8kPeriod(size_text, text, size_pattern, error_k, 
+		if (approx_period != 0) {  // There is a 8k-period <= k, case 2 in the paper
+			for (int j= 11; j >= 1; --j) {
+				cout << "periode i = " << i << "	j = " << j << endl;
+				Small8kPeriod(size_text, text, size_pattern, error_k,
 								approx_period, &i_l, &i_r, j);
-			}
 
-			if ((min < i_l) || (max > i_r)) {
-				cout << "fouchette i = " << i << "	j = " << j << endl; 
-			cout << "min = " << min << " i_l = " << i_l; 
-			cout << "	max = " << max << " i_r = " << i_r << endl;
-				cout << "Fourchette trop petite----------------------------" << endl << endl;
-				break;
+				if ((min < i_l) || (max > i_r)) {
+					cout << "fouchette trop petite	";
+					cout << "min = " << min << " i_l = " << i_l;
+					cout << "	max = " << max << " i_r = " << i_r << endl << endl;
+					break;
+				}
 			}
+		}
+		else {
+			cout << "pas de " << i << "-period" << endl;
 		}
 	}
 
     delete [] text;
     delete [] pattern;
+	delete [] naif_res;
+	delete [] alphabet;
+	// freq->clear();
 
     return 0;
 }
