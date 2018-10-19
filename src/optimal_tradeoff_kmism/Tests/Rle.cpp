@@ -214,7 +214,7 @@ list<RunRle*>* RleText::GetListTSec(int period) const {
 
 
 bool Usage() {
-    cout << endl << "How to run: ./exec size_text size_pattern error min_run";
+    cout << endl << "How to run: ./exec size_text size_pattern nb_runs";
     cout << " max_run pas_run -p optimalPlan" << endl;
 }
 
@@ -274,24 +274,6 @@ void RleText::SetPositionRuns() {
 }
 
 void RleText::MakeText(int32_t size_text, int nb_runs) {
-    // size_ = size_text;
-    // int r, s = -1;
-    // int nb_runs = 0;
-    // for (int32_t i = 0; i < size_text - 1; ++i) {
-    //     r = rand()%2;
-    //     if ( r == s)
-    //         rle_[0].back()->ExtendRunEnd();
-    //     else {
-    //         RunRle *run = new RunRle(IntToChar(r));
-    //         rle_[0].push_back(run);
-    //         nb_runs++;
-    //     }
-    //     s = r;
-    // }
-    // r = rand()%2;
-    // RunRle *run = new RunRle(IntToChar(r));
-    // rle_[1].push_back(run);
-    // nb_runs++;
     size_ = size_text/2;
     int32_t size_to_do = min(size_text/2, nb_runs);
 
@@ -398,7 +380,6 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-
     chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
     start = chrono::system_clock::now();
@@ -408,9 +389,6 @@ int main(int argc, char* argv[]) {
     int32_t size_pattern = atoi(argv[2]);
     int nb_runs = atoi(argv[3]);
     assert(size_pattern <= nb_runs && "size_pattern doit etre plus grand ou egal au nb de runs");
-    // int min_run = atoi(argv[4]);
-    // int max_run = atoi(argv[5]);
-    // int pas_run = atoi(argv[6]);
 
     char c;
 	while((c = getopt(argc, argv, "p:o:")) !=EOF) {
@@ -449,7 +427,7 @@ int main(int argc, char* argv[]) {
     	}
     }
 
-	// //  TODO : find threshold
+	//  TODO : find threshold
  //    int threshold = 1;
 	vector<char> freq;
     freq.push_back('a');
@@ -484,14 +462,14 @@ int main(int argc, char* argv[]) {
 
     }
     ave_time_hd /= nb_loops;
-    cout << "HD moyen  = " << ave_time_hd << endl; 
+    cout << "HD moyen  = " << ave_time_hd << endl;
 
 
     float ave_time_rle = 0;
     int32_t size_deriv = size_res_star;
     int *deriv = new int[size_deriv];
     int *res_star = new int[size_res_star];
-    
+
     for (int i = 0; i < nb_loops; ++i) {
 
         mid = chrono::system_clock::now();
@@ -536,9 +514,9 @@ int main(int argc, char* argv[]) {
 
     }
 
-    
+
     ave_time_rle /= nb_loops*2;
-    cout << "HD moyen  = " << ave_time_rle << endl; 
+    cout << "RLE moyen  = " << ave_time_rle << endl;
 
 
  //    delete [] t_star;

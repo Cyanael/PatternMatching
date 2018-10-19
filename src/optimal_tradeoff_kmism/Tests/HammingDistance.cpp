@@ -289,13 +289,13 @@ int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
 //   for (int32_t i= 0; i < size_res; ++i)
 //     if(res[i] <= error_k)
 //       pos_to_search.push_back(i);
-//   LCP(size_text, text, size_pattern, pattern, k_nb_letters, error_k, 
+//   LCP(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
 //       pos_to_search, size_res, res);
 // }
 
 
 
-void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern, 
+void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
          vector<char> *frequent, int32_t size_res, int *res) {
   InitTabZeros(size_res, res);
 
@@ -305,10 +305,12 @@ void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
 //     mid = start;
 
   int32_t size_fft = UpperPowOfTwo(size_text);
+  cout << "size FFT : " << size_fft << endl;
+
   FFT_wak *fft_text = new FFT_wak(size_fft);
   FFT_wak *fft_pattern = new FFT_wak(size_fft);
   FFT_wak *fft_res = new FFT_wak(size_fft, false);
-  
+
   char current_char;
   for (auto j = frequent->begin(); j != frequent->end(); ++j) {
     current_char = *j;
