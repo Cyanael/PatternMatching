@@ -28,7 +28,7 @@ double m, n;
 	while(fileText >> n){
 		filePattern >> m;
 		if (m != n){
-			if (error == 0)
+			// if (error == 0)
 				cout << "erreur pos " << i << " " << n << " != " << m << endl; 
 			error++;
 		}

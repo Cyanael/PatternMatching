@@ -238,6 +238,7 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
   mid= end;
 
   for (int i = 0; i < cpt_loop; ++i) {
+    InitTabZeros(size_res, tmp_res);
     MapLetters(k_nb_letters, size_alphabet, size_prime_number, prime_numbers, map);
 
     end = chrono::system_clock::now();
@@ -248,9 +249,6 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
     // Sort P's caracteres in frequent/infrequent caractere
     SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
                             size_alphabet, &frequent, infrequent);
-
-    SortFreqCaract(size_pattern, pattern, k_nb_letters, threshold_freq, map,
-                              size_alphabet, &frequent);
 
     end = chrono::system_clock::now();
     texec = end-mid;
@@ -278,18 +276,17 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
     texec = end-mid;
     // cout << "  res : " << texec.count() << "s" << endl;
     mid= end;
+
+  frequent.clear();
+  for (int i = 0; i < k_nb_letters; ++i)
+    infrequent[i].clear();
   }
 
-  for (int i = 0; i < size_res; ++i)
-    res[i] = size_pattern - res[i];
 
   delete [] tmp_res;
   delete [] map;
   delete [] prime_numbers;
 
-  frequent.clear();
-  for (int i = 0; i < k_nb_letters; ++i)
-    infrequent[i].clear();
   delete [] infrequent;
 
   delete fft_pattern;
@@ -315,10 +312,10 @@ int FindApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
     pattern2[i] = '$';
 
   ApproxHD(size_pattern2, pattern2, size_pattern, pattern, k_nb_letters, (float)1, size_res, res);
-  cout << "approx res :" << endl;
-  for (int i = 0; i < size_res; ++i)
-    cout << res[i] << " ";
-  cout << endl;
+  // cout << "approx res :" << endl;
+  // for (int i = 0; i < size_res; ++i)
+  //   cout << res[i] << " ";
+  // cout << endl;
 
 
   for (int i = 1; i <= position_max && size_res; ++i){
@@ -377,7 +374,7 @@ void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
     for (int32_t i = 0; i < size_res; ++i) {
       // sometime, the double variable is close to an integer
       // but a little inferior, the +0,5 corrects the cast into an integer
-      res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
+      res[i] += (fft_res->getVal(i+size_pattern-1)+0.5);
     }
 
       end = chrono::system_clock::now();
@@ -385,6 +382,10 @@ void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
       // cout << " write res : " << texec.count() << "s" << endl;
       mid = end;
   }
+
+  for (int i = 0; i < size_res; ++i)
+    res[i] = size_pattern - res[i];
+
 
     delete fft_text;
     delete fft_pattern;

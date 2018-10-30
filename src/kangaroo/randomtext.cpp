@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
     tinit = end-start;
     cout << "Init : " << tinit.count() << endl;
 
-    int nb_loops = 1;
+    int nb_loops = 20;
     for (int i=0; i<nb_loops; ++i) {
 
         CreateTextPattern(size_text + size_pattern, &text_pattern, ratio);

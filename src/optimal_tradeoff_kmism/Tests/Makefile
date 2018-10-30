@@ -1,5 +1,5 @@
 CXX=		g++
-CXXFLAGS=	-std=c++11 -g
+CXXFLAGS=	-std=c++11 -O3
 PROG=		rle
 LIBS=		-lfftw3 -lm
 

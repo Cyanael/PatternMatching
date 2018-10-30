@@ -88,7 +88,6 @@ void LoadPattern(int32_t size_text, char *text_pattern, int32_t size_pattern,
     }
 }
 
-
 // A comparison function used by sort() to compare two suffixes
 // Compares two pairs, returns 1 if first pair is smaller
 int cmp(struct suffix a, struct suffix b) {

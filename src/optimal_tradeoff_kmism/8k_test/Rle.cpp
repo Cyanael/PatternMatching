@@ -224,6 +224,7 @@ void RleText::MakeRle(int32_t size_pattern, int32_t size_text, char *text,
 			continu = false;
 	}
 	(*i_r) = i - 1;
+	cout << "nb runs : " << nb_runs << endl;
 }
 
 

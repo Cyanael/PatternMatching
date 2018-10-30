@@ -13,7 +13,7 @@ LIBS=		-lfftw3 -lm
 all: clean $(PROG)
 
 
-nbRun: k_mism.cpp LCP.cpp HammingDistance.cpp Fft_wak.cpp Rle.cpp Tools.cpp
+nbRun: k_mism.cpp HammingDistance.cpp Fft_wak.cpp Rle.cpp Tools.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS) 
 
 

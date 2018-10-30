@@ -128,7 +128,6 @@ int main(int argc, char* argv[]) {
 	int approx_period = 0;
 	int32_t i_l, i_r;
 
-
 	int32_t size_res = size_text - size_pattern +1;
 	int *naif_res = new int[size_res];
 
@@ -146,28 +145,30 @@ int main(int argc, char* argv[]) {
 
 	HD(size_text, text, size_pattern, pattern, &freq, size_res, naif_res);
 
-	// for (int i = 0; i < size_res; ++i) {
-	// 	cout << (size_pattern - naif_res[i]) <<  " ";
-	// }
-	// cout << endl;
+	cout << "HD : " ;
+	for (int i = 0; i < size_res; ++i)
+		cout << naif_res[i] << " ";
+	cout << endl;
+
 
 	int32_t min = size_res, max = -1;
 
 	int32_t cpt = 0;
 	while(cpt < size_res && min == size_res) {
-		if ((size_pattern - naif_res[cpt]) <= error_k)
+		if (naif_res[cpt] <= error_k)
 			min = cpt;
 		cpt++;
 	}
 
 	cpt = size_res -1;
 	while(cpt > -1 && max == -1) {
-		if ((size_pattern - naif_res[cpt]) <= error_k)
+		if (naif_res[cpt] <= error_k)
 			max = cpt;
 		cpt--;
 	}
 
 	cout << "min : " << min << "	max : " << max << endl;
+
 
 
 	for (int i = 8; i >= 1; --i) {
@@ -181,7 +182,7 @@ int main(int argc, char* argv[]) {
 		cout << "approx period : pos " << approx_period << " = " << appr_res[approx_period] << endl;
 
 		if (approx_period != 0) {  // There is a 8k-period <= k, case 2 in the paper
-			for (int j= 11; j >= 1; --j) {
+			for (int j = 11; j >= 1; --j) {
 				cout << "periode i = " << i << "	j = " << j << endl;
 				Small8kPeriod(size_text, text, size_pattern, error_k,
 								approx_period, &i_l, &i_r, j);
@@ -201,8 +202,8 @@ int main(int argc, char* argv[]) {
 
     delete [] text;
     delete [] pattern;
-	delete [] naif_res;
-	delete [] alphabet;
+	// delete [] naif_res;
+	// delete [] alphabet;
 	// freq->clear();
 
     return 0;

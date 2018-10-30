@@ -31,7 +31,7 @@ int k_nb_letters = 128;
 
 
 bool Usage() {
-	cout << endl << "How to run: ./exec text pattern error optionalOutput ";
+	cout << endl << "How to run: ./exec text pattern error -o optionalOutput ";
 	cout << "-p optinalPlan" << endl;
 	cout << "/!\\ The text (or pattern) input file must ";
 	cout << "contain its lenght first, then the text (or pattern)." << endl;
@@ -88,9 +88,6 @@ void WriteOuput(int32_t size_pattern, int32_t size_res, int *res, bool isHD,
 				res_i_str = to_string(size_pattern - res[i]);
 		}
 		else {
-		    if (res[i] == -1)
-		    	res_i_str = to_string(-1);
-		    else
 		    	res_i_str = to_string(res[i]);
 		}
     	if (buffer.length() + res_i_str.length() + 1 >= LIMIT) {

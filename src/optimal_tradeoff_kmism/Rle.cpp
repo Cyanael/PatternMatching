@@ -284,7 +284,7 @@ void RleText::MakeRle(int32_t size_pattern, int32_t size_text, char *text,
 	int nb_runs = 0;
 
 	//  extend the text from m to the left : gives us i_l
-	while (i >= 0 && nb_runs <= nb_errors * 2) {  //  TODO : remettre 6
+	while (i >= 0 && nb_runs <= nb_errors * 11) {
 		p = i % period_;
 		nb_runs += AddLetterBegin(i, p, text[i]);
 		i--;
@@ -298,7 +298,7 @@ void RleText::MakeRle(int32_t size_pattern, int32_t size_text, char *text,
 		p = i % period_;
 		nb_runs += AddLetterEnd(i, p, text[i]);
 		i++;
-		if (nb_runs >= nb_errors * 4 && i_r - i_l + 1 % period_ == 0)   //  TODO : remettre 12
+		if (nb_runs >= nb_errors * 22 && i_r - i_l + 1 % period_ == 0)
 			continu = false;
 	}
 	(*i_r) = i - 1;

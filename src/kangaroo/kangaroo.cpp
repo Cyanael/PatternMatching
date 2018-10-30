@@ -382,7 +382,7 @@ int main(int argc, char* argv[]) {
 
     // Write in output file
     cout << "Writing results in output file: " << file_out << endl;
-    WriteOuput(size_pattern, size_res, res, stream_out);
+    WriteOuput(size_res, res, stream_out);
 
     end = chrono::system_clock::now();
     texec = end-mid;
