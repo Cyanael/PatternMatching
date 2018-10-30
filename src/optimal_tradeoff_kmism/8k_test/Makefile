@@ -14,11 +14,7 @@ all: clean $(PROG)
 
 
 nbRun: k_mism.cpp HammingDistance.cpp Fft_wak.cpp Rle.cpp Tools.cpp
-<<<<<<< Updated upstream
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS) 
-=======
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
->>>>>>> Stashed changes
 
 
 clean:
