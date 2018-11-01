@@ -17,7 +17,6 @@ The pattern/text input file must contain its lenght then the pattern/text
 #include <cmath>
 #include <cassert>
 #include <cstdint>
-#include <chrono>
 
 
 #include "HammingDistance.hpp"
@@ -54,7 +53,7 @@ void LoadSavedPlan(char* file) {
 		cout << "Error while loading plans from " << file << endl;
 }
 
-// Intialise the pattern or text, size_pattern and size_text  from a file
+// Intialise the pattern and size_pattern from a file
 void ReadFile(string file, int32_t *size_pattern, char **pattern) {
 	ifstream stream_file(file.c_str(), ios::in);
 	char character;
@@ -76,6 +75,7 @@ void ReadFile(string file, int32_t *size_pattern, char **pattern) {
 	else
 		cout << "Can't open pattern file." << endl;
 }
+
 
 void WriteOuput(int32_t size_res, int *res, int error_k,
 				ofstream &stream_out) {
@@ -127,51 +127,100 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	chrono::time_point<chrono::system_clock> start, mid, end;
-    chrono::duration<double> texec;
-    start = chrono::system_clock::now();
-
-    int32_t size_pattern, size_text, size_res;
+    int32_t size_pattern, size_res;
+	//  size_text will containt the size of the text (case 1)
+	//  OR the number of characters we have to read (case 2)
+	int32_t size_text;
 	char *pattern, *text;
 	int *res;
 
-	// Open and read the files containing the text and pattern
-	ReadFile(file_text, &size_text, &text);
+	// Open and read the files containing the pattern
 	ReadFile(file_pattern, &size_pattern, &pattern);
-	assert(size_text >= size_pattern &&
-			"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
-	size_res = size_text - size_pattern +1;
-    res = new int[size_res];
-    InitTabZeros(size_res, res);
 
-    // Open output file
+	// Open output file
 	ofstream stream_out(file_out.c_str(), ios::out | ios::trunc);
 	if (!stream_out) {
 		cout << "Can't open output file." << endl;
 		return 0;
 	}
 
-    // Search for an approximate period
+	// Search for an approximate period
 	int approx_period = findApproximatePeriod(size_pattern, pattern,
-						k_nb_letters, 1, error_k, 8*error_k);
+		k_nb_letters, 1, error_k, 8*error_k);
 
-	//  Case 1 in the paper 
-	if (approx_period == 0) {  
-		cout << "No Small 4k-period" << endl << endl;
-		NoSmall4kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, 
-					error_k, size_res, res);
-	}
+	//  Case 1 in the paper
+	if (approx_period == 0) {
+		ReadFile(file_text, &size_text, &text);
+		assert(size_text >= size_pattern &&
+				"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
+		size_res = size_text - size_pattern +1;
+		res = new int[size_res];
+		InitTabZeros(size_res, res);
+
+		cout << endl << "No Small 4k-period" << endl << endl;
+		NoSmall4kPeriod(size_text, text, size_pattern, pattern, k_nb_letters,
+			error_k, size_res, res);
+
+	    WriteOuput(size_res, res, error_k, stream_out);
+		}
 	else {  // There is a 8k-period <= k, case 2 in the paper
-		cout << "There is a small 8k-period" << endl << endl;
-		Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k, 
-						approx_period, size_res, res);
+		// Read text
+		ifstream stream_text(file_text.c_str(), ios::in);
+		if (!stream_text) {
+			cout << "Can't open text file." << endl;
+			return 0;
+		}
+
+		stream_text >> size_text;
+		char character;
+		stream_text.get(character);  // eliminate the \n character
+		text = new char[2*size_pattern]();
+		for (int32_t i = 0; i < size_pattern-1; ++i) {
+			stream_text.get(character);
+			text[i] = character;
+		}
+
+		assert(size_text >= size_pattern &&
+				"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
+		size_text -= size_pattern; // we already read size_pattern letter of the text
+		size_res = size_pattern +1;
+		res = new int[size_res];
+		InitTabZeros(size_res, res);
+
+
+		while (size_text > -size_pattern+1) {
+			//  add size_pattern letters
+			if (size_text >= size_pattern+1) {
+				for (unsigned int i = 0; i < size_pattern+1; ++i){
+					stream_text.get(character);
+					text[size_pattern+i-1] = character;
+				}
+			}
+			else {
+				for (unsigned int i = 0; i < size_text; ++i){
+					stream_text.get(character);
+					text[size_pattern+i-1] = character;
+				}
+				for (unsigned int i = max(size_text, 0); i < size_pattern+1; ++i){
+					text[size_pattern+i-1] = '$';
+				}
+			}
+			size_text -= size_pattern+1;
+
+			cout << endl << "There is a small 8k-period" << endl << endl;
+			Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
+							approx_period, size_res, res);
+
+
+		    WriteOuput(size_pattern+1, res, error_k, stream_out);
+
+			//  slide letters
+			for (unsigned int i = 0; i < size_pattern-1; ++i){
+				text[i] = text[i+size_pattern+1];
+			}
+		}
+		stream_text.close();
 	}
-
-    WriteOuput(size_res, res, error_k, stream_out);
-
-    end = chrono::system_clock::now();
-    texec = end-start;
-    cout << endl << "Total time : " << texec.count() << "s" << endl;
 
     stream_out.close();
 

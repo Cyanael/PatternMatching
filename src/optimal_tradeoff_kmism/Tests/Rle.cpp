@@ -501,7 +501,7 @@ int main(int argc, char* argv[]) {
         		}
         	}
         }
-        cout << "nb de pairs " << nb_pair << endl;
+        // cout << "nb de pairs " << nb_pair << endl;
 
         end = chrono::system_clock::now();
         texec = end-mid;

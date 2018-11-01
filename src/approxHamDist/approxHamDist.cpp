@@ -16,7 +16,6 @@ The pattern/text input file must contain its lenght then the pattern/text
 #include <cmath>
 #include <cassert>
 #include <cstdint>
-#include <chrono>
 #include <unistd.h>
 
 extern "C" {
@@ -290,11 +289,6 @@ int main(int argc, char* argv[]) {
 		Usage();
 		return 0;
 	}
-	chrono::time_point<chrono::system_clock> start, mid, end;
-    chrono::duration<double> texec;
-    start = chrono::system_clock::now();
-	mid = start;
-
 
     string file_text = argv[1];
 	string file_pattern = argv[2];
@@ -389,84 +383,30 @@ int main(int argc, char* argv[]) {
 		cpt_loop = 1;
     cout << "Number of loop iterations: " << cpt_loop << endl;
 
-	end = chrono::system_clock::now();
-	texec = end-mid;
-	// cout << "init : " << texec.count() << "s" << endl;
-	mid= end;
-
     for (int i = 0; i < cpt_loop; ++i) {
         MapLetters(size_alphabet, size_prime_number, prime_numbers, map);
 
-
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		// cout << endl << "	map letters : " << texec.count() << "s" << endl;
-		mid = end;
-
 		if (HDopt) {
-
 	        // Sort P's caracteres in frequent/infrequent caractere
 	        SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
 	                            size_alphabet, &frequent, infrequent);
-
-			end = chrono::system_clock::now();
-			texec = end-mid;
-			cout << "	sort freq / infreq : " << texec.count() << "s" << endl;
-			mid = end;
-
-
 		    ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
 					    map, fft_text, fft_pattern, fft_tmp, tmp_res);
-
-			end = chrono::system_clock::now();
-			texec = end-mid;
-			cout << "	freq : " << texec.count() << "s		nb freq :" << frequent.size() << endl;
-			mid = end;
-
 		    ComputeInfreq(size_text, text, size_res, map, infrequent, tmp_res);
-
-			end = chrono::system_clock::now();
-			texec = end-mid;
-			cout << "	infreq : " << texec.count() << "s" << endl;
-			mid= end;
-
 		}
 		else {
 			// Put all characters in freq vector
 	        SortFreqCaract(size_pattern, pattern, threshold_freq, map,
 	                            size_alphabet, &frequent);
-
-			end = chrono::system_clock::now();
-			texec = end-mid;
-			cout << "	sort freq / infreq : " << texec.count() << "s" << endl;
-			mid = end;
-
-
 		    ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
 					    map, fft_text, fft_pattern, fft_tmp, tmp_res);
-
-			end = chrono::system_clock::now();
-			texec = end-mid;
-			cout << "	freq : " << texec.count() << "s		nb freq :" << frequent.size() << endl;
-			mid = end;
 		}
-
         KeepSmaller(size_res, tmp_res, res);
-
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		// cout << "	res : " << texec.count() << "s" << endl;
-		mid= end;
     }
 
 	// Write in output file
 	cout << "Writing results in output file: " << file_out << endl;
 	WriteOuput(size_pattern, size_res, res, stream_out);
-
-	end = chrono::system_clock::now();
-	texec = end-mid;
-	cout << "write output : " << texec.count() << "s" << endl;
-	mid= end;
 
 	stream_text.close();
 	stream_out.close();
@@ -486,10 +426,6 @@ int main(int argc, char* argv[]) {
 	delete fft_pattern;
 	delete fft_text;
 	delete fft_tmp;
-
-	end = chrono::system_clock::now();
-    texec = end-start;
-    cout << "Total time : " << texec.count() << "s" << endl;
 
 	return 0;
 }
