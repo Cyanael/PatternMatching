@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
 	cout << "HD : " ;
 	for (int i = 0; i < size_res; ++i)
 		cout << naif_res[i] << " ";
-	cout << endl;
+	cout << endl;	
 
 
 	int32_t min = size_res, max = -1;
