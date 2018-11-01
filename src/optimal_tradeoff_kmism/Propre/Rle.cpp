@@ -433,7 +433,6 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     int32_t i_l, i_r, m1;
     RleText *t_rle = new RleText(approx_period);  // T* stored as RLE blocks
     t_rle->MakeRle(size_pattern, size_text, text, error_k, &i_l, &i_r, &m1);
-    cout << "T' is between " << i_l << " and " << i_r << endl;
 
     Rle *p_rle = new Rle(approx_period);  // P* stored as RLE blocks
     p_rle->MakeRle(size_pattern, pattern, m1 * approx_period);
