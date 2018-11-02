@@ -225,8 +225,6 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
     // Sort P's caracteres in frequent/infrequent caractere
     SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
                             size_alphabet, &frequent, infrequent);
-    SortFreqCaract(size_pattern, pattern, k_nb_letters, threshold_freq, map,
-                              size_alphabet, &frequent);
 
     ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
             map, fft_text, fft_pattern, fft_tmp, tmp_res);
@@ -234,6 +232,10 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
     ComputeInfreq(size_text, text, size_res, map, infrequent, tmp_res);
 
     KeepSmaller(size_res, tmp_res, res);
+
+    frequent.clear();
+  for (int i = 0; i < k_nb_letters; ++i)
+    infrequent[i].clear();
   }
 
   for (int i = 0; i < size_res; ++i)
@@ -243,9 +245,6 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
   delete [] map;
   delete [] prime_numbers;
 
-  frequent.clear();
-  for (int i=0; i<k_nb_letters; ++i)
-    infrequent[i].clear();
   delete [] infrequent;
 
   delete fft_pattern;

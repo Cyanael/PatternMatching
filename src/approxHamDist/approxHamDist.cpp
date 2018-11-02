@@ -252,7 +252,7 @@ void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 		if (IsInfreq(CharMap(text[i], map), infreq)) {
 			current_val = map[CharToInt(text[i])];
 			for (int32_t j = 0; j < infreq[current_val].size(); ++j) {
-				if (i >= infreq[current_val][j]) {
+				if ((i >= infreq[current_val][j]) && (i-infreq[current_val][j] < size_res)) {
 					res[i-infreq[current_val][j]]++;
 				}
 			}
@@ -298,7 +298,7 @@ int main(int argc, char* argv[]) {
 	int *prime_numbers;
 	int size_prime_number;
 	ReadIntFile("prime_numbers.txt", &size_prime_number, &prime_numbers);
-	bool HDopt = true;
+	bool HDopt = false;
 
     char c;
 	while((c = getopt(argc, argv, "c:o:p:x")) !=EOF) {
@@ -313,7 +313,7 @@ int main(int argc, char* argv[]) {
 				file_out = optarg;
 				break;
 			case 'x':
-				HDopt = false;
+				HDopt = true;
 				break;
 			default:
 				Usage();
@@ -387,6 +387,7 @@ int main(int argc, char* argv[]) {
         MapLetters(size_alphabet, size_prime_number, prime_numbers, map);
 
 		if (HDopt) {
+			InitTabZeros(size_res, tmp_res);
 	        // Sort P's caracteres in frequent/infrequent caractere
 	        SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
 	                            size_alphabet, &frequent, infrequent);
@@ -402,6 +403,15 @@ int main(int argc, char* argv[]) {
 					    map, fft_text, fft_pattern, fft_tmp, tmp_res);
 		}
         KeepSmaller(size_res, tmp_res, res);
+
+		end = chrono::system_clock::now();
+		texec = end-mid;
+		// cout << "	res : " << texec.count() << "s" << endl;
+		mid= end;
+
+		frequent.clear();
+  		for (int i = 0; i < k_nb_letters; ++i)
+  		  infrequent[i].clear();
     }
 
 	// Write in output file
@@ -418,9 +428,6 @@ int main(int argc, char* argv[]) {
 	delete [] map;
 	delete [] prime_numbers;
 
-	frequent.clear();
-	for (int i=0; i<k_nb_letters; ++i)
-		infrequent[i].clear();
 	delete [] infrequent;
 
 	delete fft_pattern;

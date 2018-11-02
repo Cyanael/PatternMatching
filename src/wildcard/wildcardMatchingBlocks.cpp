@@ -20,10 +20,9 @@ The pattern/text input file must contain its lenght then the pattern/text
 #include <stdint.h>
 #include <math.h>
 #include <ctime>
-#include <chrono>
 
 extern "C"{
-	#include "../fftw-3.3.7/api/fftw3.h"
+	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
 }
 
 using namespace std;
@@ -148,10 +147,6 @@ void WriteOuput(int32_t size_res, double *res, string buffer, ofstream &file_out
 
 
 int main(int argc, char* argv[]) {
-	chrono::time_point<chrono::system_clock> start, end;
-    chrono::duration<double> texec;
-    start = chrono::system_clock::now();
-
 	if (!usage(argc)) return 0;
 
 	unsigned int size_pattern, size_fft, size_text;
@@ -324,11 +319,6 @@ int main(int argc, char* argv[]) {
 	fftw_destroy_plan(plan_text);
 	fftw_destroy_plan(plan_tmp);
 	fftw_destroy_plan(plan_ifft);
-
-
-	end = chrono::system_clock::now();
-  texec = end-start;
-  cout << "Total time : " << texec.count() << "s" << endl;
 
 	return 0;
 }
