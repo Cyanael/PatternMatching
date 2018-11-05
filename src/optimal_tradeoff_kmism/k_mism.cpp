@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
 			size_text -= size_pattern+1;
 
 			cout << endl << "There is a small 8k-period" << endl << endl;
-			Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
+			Small8kPeriod(2*size_pattern, text, size_pattern, pattern, k_nb_letters, error_k,
 							approx_period, size_res, res);
 
 

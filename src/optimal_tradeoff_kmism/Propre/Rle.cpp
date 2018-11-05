@@ -471,11 +471,6 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     	// else : the vector stays in infreq and we have all the runs of every infreq letter
     }
 
-    cout << "List of frequent char : " ;
-    for (int i = 0; i < freq.size(); ++i)
-	    cout << freq[i] << " ";
-	cout << endl;
-
 	//init T* and P*
     char *t_star, *p_star;
     int32_t size_t_star, size_p_star;
