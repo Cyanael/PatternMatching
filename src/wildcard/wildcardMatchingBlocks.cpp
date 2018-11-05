@@ -13,13 +13,16 @@ The pattern/text input file must contain its lenght then the pattern/text
 */
 
 
-#include <iostream>
-#include <fstream>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
+
+#include <iostream>
+#include <fstream>
 #include <ctime>
+#include <chrono>
 
 extern "C"{
 	#include "../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
@@ -31,13 +34,23 @@ using namespace std;
 double THRESHOLD = 0.001;
 int LIMIT = 1000; // size of the output buffer
 
-bool usage(int argc){
+bool Usage(int argc){
 	if (argc < 3){
-		cout << "How to run: ./exec text pattern optionalOutput" << endl;
+		cout << endl << "How to run: ./exec text pattern -o optionalOutput";
+		cout << "-p optionalPlan" << endl;
 		cout << "/!\\ The pattern/text input file must contain its lenght then the pattern/text" << endl;
 		return false;
 	}
 	return true;
+}
+
+void LoadSavedPlan(char* file) {
+	int res=0;
+	res = fftw_import_wisdom_from_filename(file);
+	if (res != 0)
+		cout << "Loading plans from " << file << " succeed."<< endl;
+	else
+		cout << "Error while loading plans from " << file << endl;
 }
 
 int UpperPowOfTwo(int val){
@@ -147,7 +160,30 @@ void WriteOuput(int32_t size_res, double *res, string buffer, ofstream &file_out
 
 
 int main(int argc, char* argv[]) {
-	if (!usage(argc)) return 0;
+	if (!Usage(argc)) return 0;
+
+	string file_text = argv[1];
+	string file_pattern = argv[2];
+
+	string out = "out.out";
+	char c;
+	while((c = getopt(argc, argv, "p:o:")) !=EOF) {
+		switch (c) {
+			case 'p':
+				LoadSavedPlan(optarg);
+				break;
+			case 'o':
+				out = optarg;
+				break;
+			default:
+				Usage(argc);
+				break;
+		}
+	}
+
+	chrono::time_point<chrono::system_clock> start, mid, end;
+    chrono::duration<double> texec;
+    start = chrono::system_clock::now();
 
 	unsigned int size_pattern, size_fft, size_text;
 	/* size_pattern indicates the lenght of the pattern
@@ -159,11 +195,9 @@ int main(int argc, char* argv[]) {
 	double *pattern;
 
 	// Open and read the file containing the pattern
-	string file_pattern = argv[2];
 	readPattern(file_pattern, &size_pattern, &pattern, &size_fft);
 
 	// Open file containing the text
-	string file_text = argv[1];
 	ifstream stream_text(file_text.c_str(), ios::in);
 
 	if (!stream_text){
@@ -174,12 +208,6 @@ int main(int argc, char* argv[]) {
 	stream_text >> size_text;
 
 	// Open output file
-	string out;
-	if (argc<4)
-		out = "out.out";
-	else
-		out = argv[3];
-
 	ofstream stream_output(out.c_str(), ios::out | ios::trunc);
 	if (!stream_output){
 		cout << "Can't open output file." << endl;
@@ -309,7 +337,7 @@ int main(int argc, char* argv[]) {
 	delete [] res;
 	delete [] squared_coeff_pattern;
 	delete [] cubed_coeff_pattern;
-	
+
 	fftw_free(fft_pat);
 	fftw_free(fft_pat2);
 	fftw_free(fft_pat3);
@@ -319,6 +347,10 @@ int main(int argc, char* argv[]) {
 	fftw_destroy_plan(plan_text);
 	fftw_destroy_plan(plan_tmp);
 	fftw_destroy_plan(plan_ifft);
+
+	end = chrono::system_clock::now();
+    texec = end-start;
+    cout << "Free : " << texec.count() << "s" << endl;
 
 	return 0;
 }
