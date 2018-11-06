@@ -127,10 +127,8 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-    int32_t size_pattern, size_res;
-	//  size_text will containt the size of the text (case 1)
-	//  OR the number of characters we have to read (case 2)
-	int32_t size_text;
+
+    int32_t size_pattern, size_res, size_text;
 	char *pattern, *text;
 	int *res;
 
@@ -150,6 +148,7 @@ int main(int argc, char* argv[]) {
 
 	//  Case 1 in the paper
 	if (approx_period == 0) {
+		cout << "there is no 4k-period" << endl;
 		ReadFile(file_text, &size_text, &text);
 		assert(size_text >= size_pattern &&
 				"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
@@ -164,6 +163,7 @@ int main(int argc, char* argv[]) {
 	    WriteOuput(size_res, res, error_k, stream_out);
 		}
 	else {  // There is a 8k-period <= k, case 2 in the paper
+		cout << "There is a 8k-period" << endl;
 		// Read text
 		ifstream stream_text(file_text.c_str(), ios::in);
 		if (!stream_text) {
@@ -172,6 +172,13 @@ int main(int argc, char* argv[]) {
 		}
 
 		stream_text >> size_text;
+		assert(size_text >= size_pattern &&
+						"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
+
+		int32_t rest = size_text % size_pattern;
+		int32_t nb_iter = ceil(size_text/(size_pattern+1));
+		size_text = 2*size_pattern;
+
 		char character;
 		stream_text.get(character);  // eliminate the \n character
 		text = new char[2*size_pattern]();
@@ -180,34 +187,30 @@ int main(int argc, char* argv[]) {
 			text[i] = character;
 		}
 
-		assert(size_text >= size_pattern &&
-				"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
-		size_text -= size_pattern; // we already read size_pattern letter of the text
+
 		size_res = size_pattern +1;
 		res = new int[size_res];
 		InitTabZeros(size_res, res);
 
-
-		while (size_text > -size_pattern+1) {
+		for (int i = 0; i < nb_iter; ++i) {
 			//  add size_pattern letters
-			if (size_text >= size_pattern+1) {
+			if (i < nb_iter -1) {
 				for (unsigned int i = 0; i < size_pattern+1; ++i){
 					stream_text.get(character);
 					text[size_pattern+i-1] = character;
 				}
 			}
 			else {
-				for (unsigned int i = 0; i < size_text; ++i){
+
+				for (unsigned int i = 0; i < rest; ++i){
 					stream_text.get(character);
 					text[size_pattern+i-1] = character;
 				}
-				for (unsigned int i = max(size_text, 0); i < size_pattern+1; ++i){
+				for (unsigned int i = rest; i < size_pattern+1; ++i){
 					text[size_pattern+i-1] = '$';
 				}
 			}
-			size_text -= size_pattern+1;
 
-			cout << endl << "There is a small 8k-period" << endl << endl;
 			Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
 							approx_period, size_res, res);
 

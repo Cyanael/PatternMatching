@@ -12,6 +12,7 @@ The pattern (text) input file must contain its lenght then the pattern (text)
 */
 
 #include <math.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <fstream>
@@ -31,7 +32,8 @@ int LIMIT = 1000;  // size of the output buffer
 
 bool Usage(int argc) {
 	if (argc < 3) {
-		cout << endl << "How to run: ./exec text pattern optionalOutput" << endl;
+		cout << endl << "How to run: ./exec text pattern -o optionalOutput";
+		cout << "-p optionalPlan" << endl;
 		cout << "/!\\ The text (or pattern) input file must ";
 		cout << "contain its lenght then the text (or pattern)." << endl;
 		cout << "This algorithm works with text and pattern ";
@@ -41,6 +43,15 @@ bool Usage(int argc) {
 		return false;
 	}
 	return true;
+}
+
+void LoadSavedPlan(char* file) {
+	int res=0;
+	res = fftw_import_wisdom_from_filename(file);
+	if (res != 0)
+		cout << "Loading plans from " << file << " succeed."<< endl;
+	else
+		cout << "Error while loading plans from " << file << endl;
 }
 
 int UpperPowOfTwo(int32_t val) {
@@ -149,13 +160,31 @@ void WriteOuput(int32_t size_res, double *res, ofstream &file_out) {
 int main(int argc, char* argv[]) {
 	if (!Usage(argc)) return 0;
 
+	string file_text = argv[1];
+	string inPattern = argv[2];
+
+	string out = "out.out";
+	char c;
+	while((c = getopt(argc, argv, "p:o:")) !=EOF) {
+		switch (c) {
+			case 'p':
+				LoadSavedPlan(optarg);
+				break;
+			case 'o':
+				out = optarg;
+				break;
+			default:
+				Usage(argc);
+				break;
+		}
+	}
+
 	int32_t size_pattern, size_ffts, size_text;
 	// size_ffts indicates the lenght a tab should have if we want
 	// to do the multiplication between P and T,
 	// it's a power of 2 (as advised in FFTW's doc)
 
 	// Open file containing the text
-	string file_text = argv[1];
 	ifstream stream_text(file_text.c_str(), ios::in);
 
 	if (!stream_text) {
@@ -168,16 +197,9 @@ int main(int argc, char* argv[]) {
 
 	// Open and read the file containing the pattern
 	double *pattern;
-	string inPattern = argv[2];
 	ReadPattern(inPattern, &size_pattern, size_text, size_ffts, &pattern);
 
 	// Open output file
-	string out;
-	if (argc < 4)
-		out = "out.out";
-	else
-		out = argv[3];
-
 	ofstream stream_out(out.c_str(), ios::out | ios::trunc);
 	if (!stream_out) {
 		cout << "Can't open output file." << endl;
@@ -257,6 +279,10 @@ int main(int argc, char* argv[]) {
 	fftw_destroy_plan(plan_text);
 	fftw_destroy_plan(plan_tmp);
 	fftw_destroy_plan(plan_ifft);
+
+	end = chrono::system_clock::now();
+    texec = end-start;
+    cout << "Total : " << texec.count() << "s" << endl;
 
 	return 0;
 }

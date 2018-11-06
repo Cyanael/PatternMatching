@@ -172,13 +172,15 @@ int main(int argc, char* argv[]) {
 
 
 	for (int i = 8; i >= 1; --i) {
-		approx_period = 0;
-		for (int j = 1; j < error_k; ++j) {
+		cout << "approx : ";
+		for (int j = 1; j < error_k+1; ++j) {
+			cout << size_pattern - appr_res[j] << " ";
 			if ((size_pattern - appr_res[j]) < error_k * i) {
 				approx_period = j;
 				break;
 			}
 		}
+		cout << endl;
 		cout << "approx period : pos " << approx_period << " = " << appr_res[approx_period] << endl;
 
 		if (approx_period != 0) {  // There is a 8k-period <= k, case 2 in the paper

@@ -19,12 +19,15 @@ extern "C" {
 using namespace std;
 
 int main(int argc, char* argv[]) {
-	if (argc < 4) {
-		cout << "Usage: ./exec min max savingFile opt_flag" << endl;
+	if (argc < 3) {
+		cout << "Usage: ./exec min max optional_flag" << endl;
 		cout << "The program computes the FFT and iFFT plans for tables of size ";
 		cout << " pow(2, min) to pow(2, max)." << endl;
-		cout << "You have 3 possible flags for the plan: ";
+		cout << "You have 3 possible flags plan: ";
 		cout << "0 = ESTIMATE, 1 = MEASURE, 2 = PATIENT, 3 = EXHAUSTIVE." << endl;
+		cout << "As the computation of plan can be long, every time a new plan";
+		cout << "is computed, we save all the generated plans in a new file.";
+		cout << "This allow you to stop the execution at any time." << endl;
 		cout << "Caution: For max > 16, this program needs some time, ";
 		cout << "have a look on the documentation for more information." << endl;
 		return 0;
@@ -34,11 +37,9 @@ int main(int argc, char* argv[]) {
 	int max = atoi(argv[2]);
 
 	unsigned flag = FFTW_ESTIMATE;
-	if (argc > 4){
-		int f = atoi(argv[4]);
-		if (f == 0)
-			flag = FFTW_ESTIMATE;
-		else if (f == 1)
+	if (argc >=4) {
+		int f = atoi(argv[3]);
+		if (f == 1)
 			flag = FFTW_MEASURE;
 		else if (f == 2)
 			flag = FFTW_PATIENT;
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]) {
 			flag = FFTW_EXHAUSTIVE;
 		else {
 			cout << "I did not understand the flag you want, please use:";
-			cout << "0 for MEASURE, 1 for PATIENT, 2 for EXHAUSTIVE." << endl;
+			cout << "0 for ESTIMATE, 1 for MEASURE, 2 for PATIENT, 3 for EXHAUSTIVE." << endl;
 			return 0;
 		}
 	}
@@ -96,6 +97,8 @@ int main(int argc, char* argv[]) {
 		texec = end-start;
 		cout << i << " IFFT Time : " << texec.count() << "s" << endl << endl;
 		ret = fftw_export_wisdom_to_filename(name_file.str().c_str());
+
+		cout << "write FFTs in file " << name_file.str() << endl;
     }
 
 		delete [] table;
