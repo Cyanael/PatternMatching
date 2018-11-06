@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
 
 
 	for (int i = 8; i >= 1; --i) {
-
+		approx_period = 0;
 		for (int j = 1; j < error_k; ++j) {
 			if ((size_pattern - appr_res[j]) < error_k * i) {
 				approx_period = j;
