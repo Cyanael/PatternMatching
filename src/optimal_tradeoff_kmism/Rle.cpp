@@ -216,7 +216,7 @@ RleText::~RleText() {
 }
 
 void RleText::ReorganiseListRun(int32_t step) {
-	if (step == 0)
+	if ((step == 0) || (period_ == 1))
 		return;
 
 	list<RunRle*> tmp_list = rle_[0];
@@ -438,9 +438,8 @@ void ComputeResStar(char* t_star, int32_t size_p_star, char* p_star,
 					int32_t size_res, int* res) {
 	res[0] = NaiveHD(t_star, size_p_star, p_star, 0) - nb_freq_letter + res_hd[0] - nb_$;
 	res[1] = NaiveHD(t_star, size_p_star, p_star, 1) - nb_freq_letter + res_hd[1] - nb_$;
-	for (int i = 2; i < size_res; ++i) {
+	for (int i = 2; i < size_res; ++i)
 		res[i] = -deriv[i] + 2 * res[i-1] - res[i-2];
-	}
 	for (int i= 0; i < size_res; ++i)
 		res[i] += nb_freq_letter - res_hd[i];
 }
@@ -472,7 +471,9 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     int32_t i_l, i_r, m1;
     RleText *t_rle = new RleText(approx_period);  // T* stored as RLE blocks
     t_rle->MakeRle(size_pattern, size_text, text, error_k, &i_l, &i_r, &m1);
-    cout << "i_l = " << i_l << "	i_r = " << i_r << endl;
+    
+    // t_rle->PrintRle();
+    // cout << "i_l = " << i_l << "	i_r = " << i_r << endl;
 
     Rle *p_rle = new Rle(approx_period);  // P* stored as RLE blocks
     p_rle->MakeRle(size_pattern, pattern, m1 * approx_period);
@@ -512,11 +513,11 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     	// else : the vector stays in infreq and we have all the runs of every infreq letter
     }
 
-    cout << "Liste des freq : " ;
-    for (int i = 0; i < freq.size(); ++i)
-	    cout << freq[i] << " ";
-	cout << endl;
-    cout << "Number of frequent letters : " << nb_freq_letter << endl; 
+ //    cout << "Liste des freq : " ;
+ //    for (int i = 0; i < freq.size(); ++i)
+	//     cout << freq[i] << " ";
+	// cout << endl;
+ //    cout << "Number of frequent letters : " << nb_freq_letter << endl; 
 
 	//init T* and P*
     char *t_star, *p_star;
@@ -578,5 +579,6 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     delete [] res_hd;
     for (int i = 0; i < k_nb_letters; ++i)
     	infreq[i].clear();
+    delete [] infreq;
     freq.clear();
 }

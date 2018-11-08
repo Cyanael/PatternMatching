@@ -216,7 +216,7 @@ RleText::~RleText() {
 }
 
 void RleText::ReorganiseListRun(int32_t step) {
-	if (step == 0)
+	if ((step == 0) || (period_ == 1))
 		return;
 
 	list<RunRle*> tmp_list = rle_[0];
