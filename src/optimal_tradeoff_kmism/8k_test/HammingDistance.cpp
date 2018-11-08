@@ -241,41 +241,16 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
     InitTabZeros(size_res, tmp_res);
     MapLetters(k_nb_letters, size_alphabet, size_prime_number, prime_numbers, map);
 
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    // cout << endl << "  map letters : " << texec.count() << "s" << endl;
-    mid = end;
-
     // Sort P's caracteres in frequent/infrequent caractere
     SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
                             size_alphabet, &frequent, infrequent);
 
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    // cout << " sort freq / infreq : " << texec.count() << "s" << endl;
-    mid = end;
-
     ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
             map, fft_text, fft_pattern, fft_tmp, tmp_res);
 
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    // cout << " freq : " << texec.count() << "s   nb freq :" << frequent.size() << endl;
-    mid = end;
-
     ComputeInfreq(size_text, text, size_res, map, infrequent, tmp_res);
 
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    // cout << " infreq : " << texec.count() << "s" << endl;
-    mid= end;
-
     KeepSmaller(size_res, tmp_res, res);
-
-    end = chrono::system_clock::now();
-    texec = end-mid;
-    // cout << "  res : " << texec.count() << "s" << endl;
-    mid= end;
 
   frequent.clear();
   for (int i = 0; i < k_nb_letters; ++i)
