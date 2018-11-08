@@ -301,54 +301,6 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
   // cout << "Total time : " << texec.count() << "s" << endl;
 }
 
-int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
-                          float epsilon, int position_max, int value_max) {
-  int32_t size_pattern2 = size_pattern * 2 - 1;
-  char * pattern2 = new char[size_pattern2];
-  int32_t size_res = size_pattern;
-  int* res = new int[size_res];
-
-  //  create a second string containing the pattern followed by m '$' symbols
-  for (int32_t i = 0; i < size_pattern; ++i)
-    pattern2[i] = pattern[i];
-  for (int32_t i = size_pattern; i < size_pattern2; ++i)
-    pattern2[i] = '$';
-
-  ApproxHD(size_pattern2, pattern2, size_pattern, pattern, k_nb_letters, (float)1, size_res, res);
-
-  for (int i = 1; i <= position_max && size_res; ++i){
-    if (res[i] < value_max) {
-      delete [] pattern2;
-      delete [] res;
-      return i;
-    }
-  }
-
-  delete [] pattern2;
-  delete [] res;
-
-  return 0;
-}
-
-
-void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
-                      char *pattern, int k_nb_letters, int error_k,
-                      int32_t size_res, int *res) {
-  float epsilon = 1;
-  ApproxHD(size_text, text, size_pattern, pattern, k_nb_letters, epsilon, size_res, res);
-  cout << "approx res" << endl;
-  PrintTable(size_res, res);
-
-  vector<int32_t> pos_to_search;
-  for (int32_t i= 0; i < size_res; ++i)
-    if(res[i] <= error_k)
-      pos_to_search.push_back(i);
-  LCP(size_text, text, size_pattern, pattern, k_nb_letters, error_k, 
-      pos_to_search, size_res, res);
-}
-
-
-
 
 void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern, 
          vector<char> *frequent, int32_t size_res, int *res) {
@@ -413,4 +365,49 @@ int NaiveHD(char *text, int32_t size_pattern, char *pattern, int32_t pos) {
     if (pattern[i] != text[pos + i])
       res++;
   return res;
+}
+
+
+int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
+                          float epsilon, int position_max, int value_max) {
+  int32_t size_pattern2 = size_pattern * 2 - 1;
+  char * pattern2 = new char[size_pattern2];
+  int32_t size_res = size_pattern;
+  int* res = new int[size_res];
+
+  //  create a second string containing the pattern followed by m '$' symbols
+  for (int32_t i = 0; i < size_pattern; ++i)
+    pattern2[i] = pattern[i];
+  for (int32_t i = size_pattern; i < size_pattern2; ++i)
+    pattern2[i] = '$';
+
+  ApproxHD(size_pattern2, pattern2, size_pattern, pattern, k_nb_letters, (float)1, size_res, res);
+
+  for (int i = 1; i <= position_max && size_res; ++i){
+    if (res[i] < value_max) {
+      delete [] pattern2;
+      delete [] res;
+      return i;
+    }
+  }
+
+  delete [] pattern2;
+  delete [] res;
+
+  return 0;
+}
+
+
+void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
+                      char *pattern, int k_nb_letters, int error_k,
+                      int32_t size_res, int *res) {
+  float epsilon = 1;
+  ApproxHD(size_text, text, size_pattern, pattern, k_nb_letters, epsilon, size_res, res);
+
+  vector<int32_t> pos_to_search;
+  for (int32_t i= 0; i < size_res; ++i)
+    if(res[i] <= error_k)
+      pos_to_search.push_back(i);
+  LCP(size_text, text, size_pattern, pattern, k_nb_letters, error_k, 
+      pos_to_search, size_res, res);
 }

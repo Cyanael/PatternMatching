@@ -127,7 +127,6 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-
     int32_t size_pattern, size_res, size_text;
 	char *pattern, *text;
 	int *res;
@@ -145,6 +144,7 @@ int main(int argc, char* argv[]) {
 	// Search for an approximate period
 	int approx_period = findApproximatePeriod(size_pattern, pattern,
 		k_nb_letters, 1, error_k, 8*error_k);
+	cout << "approx_period = " << approx_period << endl;
 
 	//  Case 1 in the paper
 	if (approx_period == 0) {
@@ -156,7 +156,6 @@ int main(int argc, char* argv[]) {
 		res = new int[size_res];
 		InitTabZeros(size_res, res);
 
-		cout << endl << "No Small 4k-period" << endl << endl;
 		NoSmall4kPeriod(size_text, text, size_pattern, pattern, k_nb_letters,
 			error_k, size_res, res);
 
@@ -190,9 +189,9 @@ int main(int argc, char* argv[]) {
 
 		size_res = size_pattern +1;
 		res = new int[size_res];
-		InitTabZeros(size_res, res);
 
 		for (int i = 0; i < nb_iter; ++i) {
+		InitTabZeros(size_res, res);
 			//  add size_pattern letters
 			if (i < nb_iter -1) {
 				for (unsigned int i = 0; i < size_pattern+1; ++i){
@@ -207,17 +206,18 @@ int main(int argc, char* argv[]) {
 					text[size_pattern+i-1] = character;
 				}
 				for (unsigned int i = rest; i < size_pattern+1; ++i){
-					text[size_pattern+i-1] = '$';
+					text[size_pattern+i-1] = '*';
 				}
 			}
 
 			Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
 							approx_period, size_res, res);
 
+			if (i == nb_iter - 1)
+				WriteOuput(rest, res, error_k, stream_out);
+			else
+			    WriteOuput(size_pattern+1, res, error_k, stream_out);
 
-		    WriteOuput(size_pattern+1, res, error_k, stream_out);
-
-			//  slide letters
 			for (unsigned int i = 0; i < size_pattern-1; ++i){
 				text[i] = text[i+size_pattern+1];
 			}
