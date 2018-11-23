@@ -1,5 +1,5 @@
-/* Copyright :
-Author : Tatiana Rocher, tatiana.rocher@gmail.com 
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
 */
 
 #ifndef FFT_WAK_H

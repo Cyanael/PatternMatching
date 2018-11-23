@@ -1,7 +1,7 @@
-/* Copyright :
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
-This file contains the Hamming distance algorithm 
+This file contains the Hamming distance algorithm
 used when there is at most 2*sqrt(k) frequent symbols.
 */
 
@@ -10,7 +10,6 @@ used when there is at most 2*sqrt(k) frequent symbols.
 #include <vector>
 #include <cmath>
 #include <cstdint>
-#include <chrono>
 
 extern "C" {
 	#include "../../../Lib/fftw3/fftw-3.3.7/api/fftw3.h"
@@ -85,33 +84,18 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 	for (int32_t i = 0; i < size_res; i++)
 		res[i] = 0;
 
-	chrono::time_point<chrono::system_clock> start, mid, end;
-	chrono::duration<double> texec;
 	char current_char;
 	for (auto j = frequent->begin(); j != frequent->end(); ++j) {
 		current_char = *j;
 
-		start = chrono::system_clock::now();
 		MatchLetterText(size_text, text, current_char, fft_text);
 		MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	bit vect : " << texec.count() << "s" << endl;
-		mid = end;
 
 		ReversePattern(size_pattern, fft_pattern);
 		fft_text->ExecFFT();
 		fft_pattern->ExecFFT();
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	fft exec : " << texec.count() << "s" << endl;
-		mid = end;
 
 		fft_res->FFTMultiplication(fft_text, fft_pattern);
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	mult + iexec : " << texec.count() << "s" << endl;
-		mid = end;
 
 		fft_res->ExecFFT();
 
@@ -120,11 +104,6 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 			// but a little inferior, the +0,5 corrects the cast into an integer
 			res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
 		}
-
-			end = chrono::system_clock::now();
-			texec = end-mid;
-			cout << "	write res : " << texec.count() << "s" << endl;
-			mid = end;
 	}
 }
 
@@ -148,9 +127,6 @@ void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 void ComputeHD(int32_t size_text, char *text, int32_t size_pattern,
 						char *pattern, vector<int32_t> *infrequent, float threshold_freq,
 						int size_alphabet, int32_t size_res, int *res) {
-    chrono::time_point<chrono::system_clock> start, mid, end;
-    chrono::duration<double> texec;
-    start = chrono::system_clock::now();
 
 	// Init size_fft: the lenght used for the FFTs
 	// It is a power of 2 (see FFTW documentation)
@@ -167,11 +143,6 @@ void ComputeHD(int32_t size_text, char *text, int32_t size_pattern,
     SortfreqInfreqCaract(size_pattern, pattern, threshold_freq,
 						&frequent, infrequent, size_alphabet);
 
-
-    cout << "freq " << frequent.size() << " : ";
-    for (int i = 0; i < frequent.size(); i++)
-        cout << frequent[i] << " ";
-    cout << endl;
 
     ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
 				fft_text, fft_pattern, fft_tmp, res);

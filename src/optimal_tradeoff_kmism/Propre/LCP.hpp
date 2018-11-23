@@ -1,3 +1,7 @@
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
+*/
+
 #ifndef LCP_HPP
 #define LCP_HPP
 
@@ -30,7 +34,7 @@ void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
 
 void LCP(int32_t size_text, char *text, int32_t size_pattern,
                         char *pattern, int size_alphabet,
-                        int nb_error_max, vector<int32_t> pos_to_search, 
+                        int nb_error_max, vector<int32_t> pos_to_search,
                         int32_t size_res, int *res);
 
 

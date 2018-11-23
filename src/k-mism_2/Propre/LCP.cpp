@@ -1,10 +1,10 @@
-/* Copyright :
-Author : Tatiana Rocher, tatiana.rocher@gmail.com (kangaroo algorithm) 
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com (kangaroo algorithm)
 & geeksforgeeks.org (SA, LCP, LU building et query)
 SA &  LCP : https://www.geeksforgeeks.org/%C2%AD%C2%ADkasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
 
 
-This file contains the kangaroo algorithm 
+This file contains the kangaroo algorithm
 used when there is more than 2*sqrt(k) frequent symbols.
 */
 

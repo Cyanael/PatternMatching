@@ -1,4 +1,4 @@
-/* Copyright : ???
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 */
 
@@ -63,7 +63,7 @@ void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
                       char *pattern, int k_nb_letters, int error_k,
                       int32_t size_res, int *res) ;
 
-void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern, 
+void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
          vector<char> *frequent, int32_t size_res, int *res);
 
 int NaiveHD(char *text, int32_t size_pattern, char *pattern, int32_t pos);

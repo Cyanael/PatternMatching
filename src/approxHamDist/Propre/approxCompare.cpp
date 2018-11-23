@@ -1,3 +1,7 @@
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
+*/
+
 #include<iostream>
 #include <fstream>
 #include <cmath>
@@ -36,12 +40,12 @@ int main(int argc, char* argv[]){
 		filePattern >> m;
 		if ((1 - dist_error)*n > m) {
 			if (error == 0) {
-				cout << "erreur pos " << i << " : (1-" << dist_error << ")*" << n << " : " << (1 - dist_error)*n << " > " << m << endl;
+				cout << "Difference at position " << i << " : (1-" << dist_error << ")*" << n << " : " << (1 - dist_error)*n << " > " << m << endl;
 			}
 		}
 		else if ((1+ dist_error)*n < m ) {
 			if (error == 0) {
-				cout << "erreur pos " << i << " : (1-" << dist_error << ")*" << n << " : " << (1+ dist_error)*n << " < " << m << endl;
+				cout << "Difference at position " << i << " : (1-" << dist_error << ")*" << n << " : " << (1+ dist_error)*n << " < " << m << endl;
 			}
 			error++;
 		}

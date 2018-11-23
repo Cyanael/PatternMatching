@@ -1,5 +1,5 @@
-/* Copyright :
-Author : Tatiana Rocher, tatiana.rocher@gmail.com (kangaroo algorithm) 
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com (kangaroo algorithm)
 */
 
 #ifndef TOOLS_HPP

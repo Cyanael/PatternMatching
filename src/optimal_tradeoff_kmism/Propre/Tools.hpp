@@ -1,3 +1,10 @@
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
+
+This file contains some functions used by LCP.cpp
+and HammingDistance.cpp
+*/
+
 #ifndef TOOLS_HPP
 #define TOOLS_HPP
 

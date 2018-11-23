@@ -1,7 +1,7 @@
-/* Copyright :
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
-This file contains the Hamming distance algorithm 
+This file contains the Hamming distance algorithm
 used when there is at most 2*sqrt(k) frequent symbols.
 */
 
@@ -50,9 +50,9 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
 				vector<int32_t> *infreq, int *res);
 
-void ComputeHD(int32_t size_text, char *text, int32_t size_pattern, 
-						char *pattern, vector<int32_t> *infrequent, 
-						float threshold_freq, int size_alphabet, 
+void ComputeHD(int32_t size_text, char *text, int32_t size_pattern,
+						char *pattern, vector<int32_t> *infrequent,
+						float threshold_freq, int size_alphabet,
 						int32_t size_res, int *res);
 
 #endif  // HAMMINGDISTANCE_K

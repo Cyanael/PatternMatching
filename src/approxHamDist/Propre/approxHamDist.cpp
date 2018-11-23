@@ -1,8 +1,4 @@
-
-
-
-
-/* Copyright : 
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
@@ -410,7 +406,7 @@ int main(int argc, char* argv[]) {
 		    ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
 					    map, fft_text, fft_pattern, fft_tmp, tmp_res);
 		}
-		
+
 		frequent.clear();
 		for (int i=0; i<k_nb_letters; ++i)
 			infrequent[i].clear();

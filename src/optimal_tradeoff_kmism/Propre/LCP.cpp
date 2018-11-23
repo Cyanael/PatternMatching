@@ -1,4 +1,4 @@
-/* Copyright : ???
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com (kangaroo algorithm)
 & geeksforgeeks.org (SA, LCP, LU building et query)
 SA &  LCP : https://www.geeksforgeeks.org/%C2%AD%C2%ADkasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
@@ -221,7 +221,7 @@ void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
 
 void LCP(int32_t size_text, char *text, int32_t size_pattern,
                         char *pattern, int size_alphabet,
-                        int nb_error_max, vector<int32_t> pos_to_search, 
+                        int nb_error_max, vector<int32_t> pos_to_search,
                         int32_t size_res, int *res) {
     char *text_pattern;
     ConcatTextPattern(size_text, text, size_pattern, pattern, &text_pattern);

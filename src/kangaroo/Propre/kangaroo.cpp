@@ -1,5 +1,5 @@
-/*
-Authors : Tatiana Rocher (kangaroo algorithm) & geeksforgeeks.org (SA, LCP, LU building et query)
+/*  Copyright : GNU GPL V3
+Authors : Tatiana Rocher (kangaroo function) & geeksforgeeks.org (SA, LCP, LU building et query)
 SA &  LCP : https://www.geeksforgeeks.org/%C2%AD%C2%ADkasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
 
 

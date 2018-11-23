@@ -1,4 +1,4 @@
-/* Copyright :;kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :

@@ -1,5 +1,5 @@
-/* Copyright :
-Author : Tatiana Rocher, tatiana.rocher@gmail.com 
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
 install the fftw3 library

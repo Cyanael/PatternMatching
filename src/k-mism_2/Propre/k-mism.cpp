@@ -1,4 +1,4 @@
-/* Copyright :
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
@@ -7,7 +7,7 @@ make
 make clean
 
 Execution :
-./k-mism text.in pattern.in error optional.out -p optionalPlan 
+./k-mism text.in pattern.in error optional.out -p optionalPlan
 The pattern/text input file must contain its lenght then the pattern/text
 */
 
@@ -31,7 +31,7 @@ int k_nb_letters = 128;
 
 
 bool Usage() {
-	cout << endl << "How to run: ./exec text pattern error optionalOutput ";
+	cout << endl << "How to run: ./exec text pattern error -o optionalOutput ";
 	cout << "-p optinalPlan" << endl;
 	cout << "/!\\ The text (or pattern) input file must ";
 	cout << "contain its lenght first, then the text (or pattern)." << endl;
@@ -115,7 +115,7 @@ int SortCaract(int32_t size_pattern, char *pattern, int32_t threshold_freq,
 			vector<int32_t> v = {i};
 			sortedChar[CharToInt(pattern[i])] = v;
 		}
-		else 
+		else
 			sortedChar[CharToInt(pattern[i])].push_back(i);
 	}
 	int freqChar = 0;

@@ -1,7 +1,8 @@
-/* Copyright : ???
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 */
+
 #include <iostream>
 #include <vector>
 
@@ -456,7 +457,7 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     // we don't want to compute the $ symbol
     infreq[CharToInt('$')].clear();
 
-    int threshold = 1;
+    int threshold = size_text*25;
 	vector<char> freq;
 
 	int nb_freq_letter = 0;

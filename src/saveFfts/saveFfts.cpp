@@ -1,4 +1,4 @@
-/* Copyright: ??
+/* Copyright: GNU GPL V3
 Author: Tatiana Rocher tatiana.rocher@gmail.com
 
 This file is used to make and save FFTs plans.

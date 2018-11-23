@@ -1,4 +1,4 @@
-/* Copyright :
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
@@ -30,7 +30,7 @@ int k_nb_letters = 128;
 int LIMIT = 1048576;  // size of the output buffer
 
 bool Usage() {
-	cout << endl << "How to run: ./exec text pattern optionalOutput" << endl;
+	cout << endl << "How to run: ./exec text pattern -o optionalOutput -p optionalPlan" << endl;
 	cout << "/!\\ The text (or pattern) input file must ";
 	cout << "contain its lenght first, then the text (or pattern)." << endl;
 	cout << "The size of the text is limited to 2^32/2 bits. ";

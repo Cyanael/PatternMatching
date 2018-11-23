@@ -1,3 +1,7 @@
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
+*/
+
 #include<iostream>
 #include <fstream>
 #include <ctime>

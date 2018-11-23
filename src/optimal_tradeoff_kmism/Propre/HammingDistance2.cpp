@@ -37,8 +37,12 @@ void MapLetters(int k_nb_letters, int size_alphabet, int size_prime_number, int 
   int a = random()%p;
   int b = random()%p;
 
-  for (int i = 0; i < k_nb_letters; ++i)
-    map[i] = ((a*i + b) % p) % size_alphabet;
+  if (size_alphabet <= 90) // number of character we can read ('!' (33) to 'z' (122))
+    for (int i = 0; i < k_nb_letters; ++i)
+      map[i] = ((a*i + b) % p) % size_alphabet + 33; // we add 33 to have characters we can read in tests
+  else
+    for (int i = 0; i < k_nb_letters; ++i)
+      map[i] = ((a*i + b) % p) % size_alphabet;
 }
 
 char CharMap(char letter, int *map) {
@@ -85,8 +89,6 @@ void SortFreqCaract(int32_t size_pattern, char *pattern, int k_nb_letters,
   }
   delete [] infreq;
 }
-
-
 
 bool IsInfreq(char letter, vector<int32_t> *infreq) {
   if (infreq[CharToInt(letter)].size() > 0)
@@ -148,10 +150,12 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
     current_char = *j;
     MatchLetterTextApprox(size_text, text, current_char, map, fft_text);
     MatchLetterTextApprox(size_pattern, pattern, current_char, map, fft_pattern);
-
     ReversePattern(size_pattern, fft_pattern);
+
     fft_text->ExecFFT();
+
     fft_pattern->ExecFFT();
+
     fft_res->FFTMultiplication(fft_text, fft_pattern);
     fft_res->ExecFFT();
 
@@ -206,14 +210,14 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
 
   // Init size_res : length of the res table which indicates the hamm dist
   int *tmp_res = new int[size_res]();
-  for (int32_t i = 0; i<size_res; ++i)
+  for (int32_t i = 0; i < size_res; ++i)
     res[i] = size_pattern;
 
   int32_t threshold_freq = sqrt(size_pattern *log2(size_text));
   vector<char> frequent;
   vector<int32_t> *infrequent = new vector<int32_t>[k_nb_letters];
 
-  int32_t cpt_loop = cst_loop * log2(size_text);
+  int32_t cpt_loop = 5;
   int *map = new int[k_nb_letters];
   int size_alphabet = min(round(2 / epsilon), (float)k_nb_letters);
   if (size_alphabet == k_nb_letters)
@@ -226,16 +230,15 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
     SortfreqInfreqCaract(size_pattern, pattern, threshold_freq, map,
                             size_alphabet, &frequent, infrequent);
 
+    SortFreqCaract(size_pattern, pattern, k_nb_letters, threshold_freq, map,
+                              size_alphabet, &frequent);
+
     ComputeFreq(size_pattern, size_text, size_res, text, pattern, &frequent,
             map, fft_text, fft_pattern, fft_tmp, tmp_res);
 
     ComputeInfreq(size_text, text, size_res, map, infrequent, tmp_res);
 
     KeepSmaller(size_res, tmp_res, res);
-
-    frequent.clear();
-  for (int i = 0; i < k_nb_letters; ++i)
-    infrequent[i].clear();
   }
 
   for (int i = 0; i < size_res; ++i)
@@ -244,13 +247,53 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
   delete [] tmp_res;
   delete [] map;
   delete [] prime_numbers;
+
+  frequent.clear();
+  for (int i = 0; i < k_nb_letters; ++i)
+    infrequent[i].clear();
   delete [] infrequent;
 
   delete fft_pattern;
   delete fft_text;
   delete fft_tmp;
-
 }
+
+
+void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
+         vector<char> *frequent, int32_t size_res, int *res) {
+  InitTabZeros(size_res, res);
+
+  int32_t size_fft = UpperPowOfTwo(size_text);
+  FFT_wak *fft_text = new FFT_wak(size_fft);
+  FFT_wak *fft_pattern = new FFT_wak(size_fft);
+  FFT_wak *fft_res = new FFT_wak(size_fft, false);
+
+  char current_char;
+
+  for (auto j = frequent->begin(); j != frequent->end(); ++j) {
+    current_char = *j;
+
+    MatchLetterText(size_text, text, current_char, fft_text);
+    MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
+
+    ReversePattern(size_pattern, fft_pattern);
+    fft_text->ExecFFT();
+    fft_pattern->ExecFFT();
+    fft_res->FFTMultiplication(fft_text, fft_pattern);
+    fft_res->ExecFFT();
+
+    for (int32_t i = 0; i < size_res; ++i) {
+      // sometime, the double variable is close to an integer
+      // but a little inferior, the +0,5 corrects the cast into an integer
+      res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
+    }
+  }
+
+    delete fft_text;
+    delete fft_pattern;
+    delete fft_res;
+}
+
 
 int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
                           float epsilon, int position_max, int value_max) {
@@ -265,15 +308,43 @@ int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
   for (int32_t i = size_pattern; i < size_pattern2; ++i)
     pattern2[i] = '$';
 
-  ApproxHD(size_pattern2, pattern2, size_pattern, pattern, k_nb_letters, (float)1, size_res, res);
+    vector<char> freq;
+	vector<int32_t> *infreq = new vector<int32_t>[k_nb_letters];
 
-  for (int i = 1; i <= position_max; ++i){
-    if (res[i] < value_max)
+    for (int32_t i = 0; i < size_pattern; ++i) {
+		if (infreq[CharToInt(pattern[i])].size() == 0) {
+			vector<int32_t> v = {i};
+			infreq[CharToInt(pattern[i])] = v;
+		}
+		else
+			infreq[CharToInt(pattern[i])].push_back(i);
+	}
+	for (int32_t i = 0; i < k_nb_letters; ++i) {
+		if (infreq[i].size() >= sqrt(size_pattern *log2(size_pattern2))) {
+			freq.push_back(IntToChar(i));
+			infreq[i].clear();
+		}
+	}
+
+    HD(size_pattern2, pattern2, size_pattern, pattern, &freq, size_res, res);
+
+  for (int i = 1; i <= position_max && size_res; ++i){
+    if (res[i] < value_max) {
+      delete [] pattern2;
+      delete [] res;
       return i;
+    }
   }
+
+  delete [] pattern2;
+  delete [] res;
+  freq.clear();
+  for (int i=0; i<k_nb_letters; ++i)
+      infreq[i].clear();
+  delete [] infreq;
+
   return 0;
 }
-
 
 void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
                       char *pattern, int k_nb_letters, int error_k,
@@ -287,43 +358,6 @@ void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
       pos_to_search.push_back(i);
   LCP(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
       pos_to_search, size_res, res);
-}
-
-
-void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
-         vector<char> *frequent, int32_t size_res, int *res) {
-  InitTabZeros(size_res, res);
-
-  int32_t size_fft = UpperPowOfTwo(size_text);
-  FFT_wak *fft_text = new FFT_wak(size_fft);
-  FFT_wak *fft_pattern = new FFT_wak(size_fft);
-  FFT_wak *fft_res = new FFT_wak(size_fft, false);
-
-  char current_char;
-  for (auto j = frequent->begin(); j != frequent->end(); ++j) {
-    current_char = *j;
-
-    MatchLetterText(size_text, text, current_char, fft_text);
-    MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
-
-    ReversePattern(size_pattern, fft_pattern);
-    fft_text->ExecFFT();
-    fft_pattern->ExecFFT();
-
-    fft_res->FFTMultiplication(fft_text, fft_pattern);
-    fft_res->ExecFFT();
-
-    for (int32_t i = 0; i < size_res; ++i) {
-      // sometime, the double variable is close to an integer
-      // but a little inferior, the +0,5 corrects the cast into an integer
-      res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
-    }
-
-  }
-
-    delete fft_text;
-    delete fft_pattern;
-    delete fft_res;
 }
 
 int NaiveHD(char *text, int32_t size_pattern, char *pattern, int32_t pos) {

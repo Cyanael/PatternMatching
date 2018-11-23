@@ -1,4 +1,4 @@
-/* Copyright : ???
+/* Copyright : GNU GPL V3
 Author : Tatiana Rocher, tatiana.rocher@gmail.com
 
 Compilation :
@@ -31,7 +31,7 @@ int k_nb_letters = 128;
 
 
 bool Usage() {
-	cout << endl << "How to run: ./exec text pattern error optionalOutput ";
+	cout << endl << "How to run: ./exec text pattern error -o optionalOutput ";
 	cout << "-p optinalPlan" << endl;
 	cout << "/!\\ The text (or pattern) input file must ";
 	cout << "contain its lenght first, then the text (or pattern)." << endl;

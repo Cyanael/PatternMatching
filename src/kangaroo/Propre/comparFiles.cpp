@@ -1,3 +1,7 @@
+/* Copyright : GNU GPL V3
+Author : Tatiana Rocher, tatiana.rocher@gmail.com
+*/
+
 #include<iostream>
 #include <fstream>
 
@@ -9,21 +13,21 @@ int main(int argc, char* argv[]){
 		cout << "Usage: ./exec k_mism_res exact_res" << endl;
 		cout << "If no ouput file is mentionned, result is in verif.out." << endl;
 		cout << "/!\\ This algorithm is slow!" << endl;
-	} 
+	}
 	int m, n;
 
 	string inText= argv[1];
 	ifstream fileText(inText.c_str(), ios::in);
 
 	if (!fileText){
-		cout << "Can't open first file." << endl; 
+		cout << "Can't open first file." << endl;
 		return 0;
 	}
 	string inPat= argv[2];
 	ifstream filePattern(inPat.c_str(), ios::in);
-	
+
 	if (!filePattern){
-		cout << "Can't open second file." << endl; 
+		cout << "Can't open second file." << endl;
 		return 0;
 	}
 
@@ -33,7 +37,7 @@ int main(int argc, char* argv[]){
 		filePattern >> m;
 		if (m != n){
 			if (nb_errors == 0)
-				cout << "first error at position " << i << " " << n << " != " << m << endl; 
+				cout << "first error at position " << i << " " << n << " != " << m << endl;
 			nb_errors++;
 		}
 		i++;
