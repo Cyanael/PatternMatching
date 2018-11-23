@@ -68,7 +68,7 @@ void SortfreqInfreqCaract(int32_t size_pattern, char *pattern, float limit,
     else {
       infreq[current_val].push_back(i);
     }
-  }
+}b27a63b
   for (int32_t i = 0; i < size_alphabet; ++i) {
     if (infreq[i].size() >= limit) {
       freq->push_back(IntToChar(i));
@@ -287,11 +287,6 @@ int FindApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
     pattern2[i] = '$';
 
   ApproxHD(size_pattern2, pattern2, size_pattern, pattern, k_nb_letters, (float)1, size_res, res);
-  // cout << "approx res :" << endl;
-  // for (int i = 0; i < size_res; ++i)
-  //   cout << res[i] << " ";
-  // cout << endl;
-
 
   for (int i = 1; i <= position_max && size_res; ++i){
     appr_res[i] = res[i];

@@ -150,9 +150,14 @@ int main(int argc, char* argv[]) {
 	int approx_period = findApproximatePeriod(size_pattern, pattern,
 		k_nb_letters, 1, error_k, 8*error_k);
 
-	//  Case 1 in the paper
+		mid = chrono::system_clock::now();
+		texec = mid-start;
+		cout << endl << "Approx time : " << texec.count() << "s" << endl;
+		end = mid;
+
+	//  Case 1 in the papermid
 	if (approx_period == 0) {
-		cout << "there is no 4k-period" << endl;
+		cout << "There is no 4k-period" << endl;
 		ReadFile(file_text, &size_text, &text);
 		assert(size_text >= size_pattern &&
 				"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
@@ -160,7 +165,6 @@ int main(int argc, char* argv[]) {
 		res = new int[size_res];
 		InitTabZeros(size_res, res);
 
-		cout << endl << "No Small 4k-period" << endl << endl;
 		NoSmall4kPeriod(size_text, text, size_pattern, pattern, k_nb_letters,
 			error_k, size_res, res);
 
@@ -181,9 +185,9 @@ int main(int argc, char* argv[]) {
 
 		int32_t rest = size_text % size_pattern;
 		int32_t nb_iter = ceil(size_text/(size_pattern+1));
-		cout << "nb_iter " << nb_iter << endl;
+		// cout << "nb_iter " << nb_iter << endl;
 		size_text = 2*size_pattern;
-		cout << "size_text " << size_text << endl;
+		// cout << "size_text " << size_text << endl;
 
 		char character;
 		stream_text.get(character);  // eliminate the \n character
@@ -199,7 +203,7 @@ int main(int argc, char* argv[]) {
 		InitTabZeros(size_res, res);
 
 		for (int i = 0; i < nb_iter; ++i) {
-			cout << "num iter = " << i << endl;
+			// cout << "num iter = " << i << endl;
 			//  add size_pattern letters
 			if (i < nb_iter -1) {
 				for (unsigned int i = 0; i < size_pattern+1; ++i){
@@ -233,6 +237,8 @@ int main(int argc, char* argv[]) {
 	}
 
     end = chrono::system_clock::now();
+	texec = end-mid;
+    cout << endl << "LCP/RLE time : " << texec.count() << "s" << endl;
     texec = end-start;
     cout << endl << "Total time : " << texec.count() << "s" << endl;
 

@@ -225,11 +225,12 @@ void ApproxHD(int32_t size_text, char *text, int32_t size_pattern,
   vector<char> frequent;
   vector<int32_t> *infrequent = new vector<int32_t>[k_nb_letters];
 
-  int32_t cpt_loop = cst_loop * log2(size_text);
+  int32_t cpt_loop = 5;
   int *map = new int[k_nb_letters];
   int size_alphabet = min(round(2 / epsilon), (float)k_nb_letters);
   if (size_alphabet == k_nb_letters)
     cpt_loop = 1;
+    cout << "nb lettre alphabet " << size_alphabet << endl;
     // cout << "Number of loop iterations: " << cpt_loop << endl;
 
   end = chrono::system_clock::now();
@@ -415,10 +416,18 @@ int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
 void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
                       char *pattern, int k_nb_letters, int error_k,
                       int32_t size_res, int *res) {
+  chrono::time_point<chrono::system_clock> start, mid, end;
+  chrono::duration<double> texec;
+  start = chrono::system_clock::now();
+
   float epsilon = 1;
   ApproxHD(size_text, text, size_pattern, pattern, k_nb_letters, epsilon, size_res, res);
-  cout << "approx res" << endl;
-  PrintTable(size_res, res);
+  // cout << "approx res" << endl;
+  // PrintTable(size_res, res);
+
+  end = chrono::system_clock::now();
+  texec = end-start;
+  cout << " temps approx : " << texec.count() << "s" << endl;
 
   vector<int32_t> pos_to_search;
   for (int32_t i= 0; i < size_res; ++i)

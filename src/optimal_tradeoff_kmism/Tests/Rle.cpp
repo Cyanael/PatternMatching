@@ -438,7 +438,9 @@ int main(int argc, char* argv[]) {
     int *res_hd = new int[size_res_star];
 
     float ave_time_hd = 0;
-    int nb_loops = 10;
+    int nb_loops = 100;
+    int res = fftw_import_wisdom_from_filename("../../saveFfts/20_to_24_patient.plan");
+
     for (int i = 0; i < nb_loops; ++i) {
 
         mid = chrono::system_clock::now();
@@ -447,8 +449,6 @@ int main(int argc, char* argv[]) {
         char *t_star, *p_star;
         t_rle->DoString(&size_t_star, &t_star);
         p_rle->DoString(&size_p_star, &p_star);
-
-
 
         // Frequent letters
         HD(size_t_star, t_star, size_p_star,  p_star, &freq,
@@ -465,58 +465,58 @@ int main(int argc, char* argv[]) {
     cout << "HD moyen  = " << ave_time_hd << endl;
 
 
-    float ave_time_rle = 0;
-    int32_t size_deriv = size_res_star;
-    int *deriv = new int[size_deriv];
-    int *res_star = new int[size_res_star];
+    // float ave_time_rle = 0;
+    // int32_t size_deriv = size_res_star;
+    // int *deriv = new int[size_deriv];
+    // int *res_star = new int[size_res_star];
+    //
+    // for (int i = 0; i < nb_loops; ++i) {
+    //
+    //     mid = chrono::system_clock::now();
+    //     // Infrequent letters
+    //     RunRle *runP;
+    //     InitTabZeros(size_deriv, deriv);
+    //     InitTabZeros(size_res_star, res_star);
+    //     int nb_pair = 0;
+    //
+    //     // compute pair of runs in T' and P*
+    //     for (int i = 0; i < 2; ++i) {
+    //     	for (std::list<RunRle*>::iterator it = t_rle->GetList(i)->begin(); it != t_rle->GetList(i)->end(); ++it) {
+    //     		c = (*it)->GetChar();
+    //     		for (int k = 0; k < infreq[CharToInt(c)].size(); ++k) {
+    //     			runP = infreq[CharToInt(c)][k];
+    //     			UpdateDeriv((*it), runP, size_deriv, deriv);
+    //                 nb_pair++;
+    //     		}
+    //     	}
+    //     }
+    //     //  do the same with T" and P*
+    //     for (int i = 0; i < 2; ++i) {
+    //     	for (std::list<RunRle*>::iterator it = t_rle->GetListTSec(i)->begin(); it != t_rle->GetListTSec(i)->end(); ++it) {
+    //     		c = (*it)->GetChar();
+    //     		for (int k = 0; k < infreq[CharToInt(c)].size(); ++k) {
+    //     			runP = infreq[CharToInt(c)][k];
+    //     			UpdateDeriv((*it), runP, size_deriv, deriv);
+    //                 nb_pair++;
+    //     		}
+    //     	}
+    //     }
+    //     // cout << "nb de pairs " << nb_pair << endl;
+    //
+    //     end = chrono::system_clock::now();
+    //     texec = end-mid;
+    //     // cout << "Rle : " << texec.count() << "s" << endl;
+    //     mid= end;
+    //
+    //
+    //     // p_rle->UpdateRle(pas_run);
+    //     ave_time_rle += texec.count();
+    //
+    // }
 
-    for (int i = 0; i < nb_loops; ++i) {
 
-        mid = chrono::system_clock::now();
-        // Infrequent letters
-        RunRle *runP;
-        InitTabZeros(size_deriv, deriv);
-        InitTabZeros(size_res_star, res_star);
-        int nb_pair = 0;
-
-        // compute pair of runs in T' and P*
-        for (int i = 0; i < 2; ++i) {
-        	for (std::list<RunRle*>::iterator it = t_rle->GetList(i)->begin(); it != t_rle->GetList(i)->end(); ++it) {
-        		c = (*it)->GetChar();
-        		for (int k = 0; k < infreq[CharToInt(c)].size(); ++k) {
-        			runP = infreq[CharToInt(c)][k];
-        			UpdateDeriv((*it), runP, size_deriv, deriv);
-                    nb_pair++;
-        		}
-        	}
-        }
-        //  do the same with T" and P*
-        for (int i = 0; i < 2; ++i) {
-        	for (std::list<RunRle*>::iterator it = t_rle->GetListTSec(i)->begin(); it != t_rle->GetListTSec(i)->end(); ++it) {
-        		c = (*it)->GetChar();
-        		for (int k = 0; k < infreq[CharToInt(c)].size(); ++k) {
-        			runP = infreq[CharToInt(c)][k];
-        			UpdateDeriv((*it), runP, size_deriv, deriv);
-                    nb_pair++;
-        		}
-        	}
-        }
-        // cout << "nb de pairs " << nb_pair << endl;
-
-        end = chrono::system_clock::now();
-        texec = end-mid;
-        // cout << "Rle : " << texec.count() << "s" << endl;
-        mid= end;
-
-
-        // p_rle->UpdateRle(pas_run);
-        ave_time_rle += texec.count();
-
-    }
-
-
-    ave_time_rle /= nb_loops*2;
-    cout << "RLE moyen  = " << ave_time_rle << endl;
+    // ave_time_rle /= nb_loops*2;
+    // cout << "RLE moyen  = " << ave_time_rle << endl;
 
 
  //    delete [] t_star;

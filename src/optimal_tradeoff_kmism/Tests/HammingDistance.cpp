@@ -299,13 +299,7 @@ void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
          vector<char> *frequent, int32_t size_res, int *res) {
   InitTabZeros(size_res, res);
 
-// chrono::time_point<chrono::system_clock> start, mid, end;
-//     chrono::duration<double> texec;
-//     start = chrono::system_clock::now();
-//     mid = start;
-
   int32_t size_fft = UpperPowOfTwo(size_text);
-  cout << "size FFT : " << size_fft << endl;
 
   FFT_wak *fft_text = new FFT_wak(size_fft);
   FFT_wak *fft_pattern = new FFT_wak(size_fft);
@@ -314,25 +308,13 @@ void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
   char current_char;
   for (auto j = frequent->begin(); j != frequent->end(); ++j) {
     current_char = *j;
-  // current_char = (*frequent->begin());
 
     MatchLetterText(size_text, text, current_char, fft_text);
     MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
-
     ReversePattern(size_pattern, fft_pattern);
 
-    // mid = chrono::system_clock::now();
-
     fft_text->ExecFFT();
-    // end = chrono::system_clock::now();
-    // texec = end-mid;
-    // cout << "exec : " << texec.count() << "s" << endl;
     fft_pattern->ExecFFT();
-
-    // end = chrono::system_clock::now();
-    // texec = end-mid;
-    // cout << "2 exec : " << texec.count() << "s" << endl;
-
     fft_res->FFTMultiplication(fft_text, fft_pattern);
     fft_res->ExecFFT();
 
@@ -341,7 +323,6 @@ void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
       // but a little inferior, the +0,5 corrects the cast into an integer
       res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
     }
-
   }
 
     delete fft_text;

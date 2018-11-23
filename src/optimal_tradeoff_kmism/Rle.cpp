@@ -87,7 +87,7 @@ Rle::Rle(int p) {
 		rle[i] = (*list_run);
 	}
 	rle_ = rle;
-} 
+}
 
 Rle::~Rle() {
 	//  TODO
@@ -166,7 +166,7 @@ void Rle::SetPositionRuns() {
 	for (int i = 0; i < period_; ++i) {
 		for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it) {
 			(*it)->SetPosition(pos);
-			pos += (*it)->GetSize();	
+			pos += (*it)->GetSize();
 		}
 	}
 }
@@ -198,7 +198,7 @@ RleText::RleText(int p) : Rle(p) {
 		t_sec[i] = (*liste);
 	}
 	t_sec_ = t_sec;
-} 
+}
 
 RleText::~RleText() {
 	//  TODO
@@ -206,7 +206,7 @@ RleText::~RleText() {
 	// 	for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it)
 	// 		delete (*it);
 	// 	rle_[i].clear();
-		
+
 	// 	for (std::list<RunRle*>::iterator it = t_sec_[i].begin(); it != t_sec_[i].end(); ++it)
 	// 		delete (*it);
 	// 	t_sec_[i].clear();
@@ -221,7 +221,7 @@ void RleText::ReorganiseListRun(int32_t step) {
 
 	list<RunRle*> tmp_list = rle_[0];
 	int pos = 0;
-	
+
 	if (step%2 == 0) {
 		list<RunRle*> tmp_list1 = rle_[1];
 		for (int i = 0; i < period_/2-1; ++i) {
@@ -267,13 +267,13 @@ void RleText::SetPositionRuns() {
 	for (int i = 0; i < period_; ++i) {
 		for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it) {
 			(*it)->SetPosition(pos);
-			pos += (*it)->GetSize();	
+			pos += (*it)->GetSize();
 		}
 	}
 	for (int i = 0; i < period_; ++i) {
 		for (std::list<RunRle*>::iterator it = t_sec_[i].begin(); it != t_sec_[i].end(); ++it) {
 			(*it)->SetPosition(pos);
-			pos += (*it)->GetSize();	
+			pos += (*it)->GetSize();
 		}
 	}
 }
@@ -388,7 +388,7 @@ void Rle::DoString(int32_t *size, char **str) const {
     		}
     	}
 	}
-}	
+}
 
 void RleText::DoString(int32_t *size, char **str) const {
 	(*size) = size_;
@@ -471,8 +471,6 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     int32_t i_l, i_r, m1;
     RleText *t_rle = new RleText(approx_period);  // T* stored as RLE blocks
     t_rle->MakeRle(size_pattern, size_text, text, error_k, &i_l, &i_r, &m1);
-    
-    // t_rle->PrintRle();
     // cout << "i_l = " << i_l << "	i_r = " << i_r << endl;
 
     Rle *p_rle = new Rle(approx_period);  // P* stored as RLE blocks
@@ -513,11 +511,11 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     	// else : the vector stays in infreq and we have all the runs of every infreq letter
     }
 
- //    cout << "Liste des freq : " ;
- //    for (int i = 0; i < freq.size(); ++i)
+    // cout << "Liste des freq : " ;
+    // for (int i = 0; i < freq.size(); ++i)
 	//     cout << freq[i] << " ";
 	// cout << endl;
- //    cout << "Number of frequent letters : " << nb_freq_letter << endl; 
+    // cout << "Number of frequent letters : " << nb_freq_letter << endl;
 
 	//init T* and P*
     char *t_star, *p_star;

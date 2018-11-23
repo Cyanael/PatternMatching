@@ -1,7 +1,7 @@
 CXX=		g++
 CXXFLAGS=	-std=c++11 -O3
 PROG=		rle
-LIBS=		-lfftw3 -lm
+LIBS=		-L/home/cosc/tr18544/linux/Projects/Lib/fftw3/lib -lfftw3 -lm
 
 # .SUFFIXES:.o
 
@@ -14,7 +14,7 @@ all: clean $(PROG)
 
 
 rle: HammingDistance.cpp Fft_wak.cpp Rle.cpp Tools.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS) 
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
 
 clean:

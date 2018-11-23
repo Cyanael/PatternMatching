@@ -221,7 +221,7 @@ void Kangaroo(int32_t size_text, int32_t size_pattern, int32_t size_suff_array,
 
 void LCP(int32_t size_text, char *text, int32_t size_pattern,
                         char *pattern, int size_alphabet,
-                        int nb_error_max, vector<int32_t> pos_to_search, 
+                        int nb_error_max, vector<int32_t> pos_to_search,
                         int32_t size_res, int *res) {
     chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec, tinit;
@@ -269,7 +269,7 @@ void LCP(int32_t size_text, char *text, int32_t size_pattern,
     mid = end;
     end = chrono::system_clock::now();
     texec = end-start;
-    // cout << "Init : " << texec.count() << endl;
+    cout << "Init : " << texec.count() << endl;
     mid = end;
 
     for (int i = 0; i < size_res; ++i)
@@ -280,7 +280,7 @@ void LCP(int32_t size_text, char *text, int32_t size_pattern,
 
     end = chrono::system_clock::now();
     texec = end-mid;
-    // cout << "Queries : " << texec.count() << endl;
+    cout << "Queries : " << texec.count() << endl;
     mid = end;
 
     delete [] text_pattern;

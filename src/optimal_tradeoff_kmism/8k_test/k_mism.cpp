@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
 	cout << "HD : " ;
 	for (int i = 0; i < size_res; ++i)
 		cout << naif_res[i] << " ";
-	cout << endl;	
+	cout << endl;
 
 
 	int32_t min = size_res, max = -1;
@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		cout << endl;
-		cout << "approx period : pos " << approx_period << " = " << appr_res[approx_period] << endl;
+		cout << "approx period : pos " << approx_period << " = " << size_pattern - appr_res[approx_period] << endl;
 
 		if (approx_period != 0) {  // There is a 8k-period <= k, case 2 in the paper
 			for (int j = 11; j >= 1; --j) {
