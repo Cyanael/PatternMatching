@@ -1,14 +1,14 @@
 CXX=		g++
 CXXFLAGS=	-std=c++11 -O3
 PROG=		k-mism
-LIBS=		-lfftw3 -lm
+LIBS=		-L/home/cosc/tr18544/linux/Projects/Lib/fftw3/lib -lfftw3 -lm
 
 
 all: clean $(PROG)
 
 
 k-mism: k-mism.cpp LCP.cpp HammingDistance.cpp Fft_wak.cpp Tools.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS) 
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
 
 clean:
