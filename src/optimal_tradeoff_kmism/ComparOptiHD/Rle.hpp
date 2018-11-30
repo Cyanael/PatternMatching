@@ -20,6 +20,7 @@ class RunRle {
 	public:
 		RunRle(char l);
 		RunRle(RunRle *run);
+		~RunRle();
 
 		void DeleteRunBegin(int period);
 		void ExtendRunBegin(int pos);

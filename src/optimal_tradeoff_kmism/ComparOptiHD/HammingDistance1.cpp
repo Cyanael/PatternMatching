@@ -459,10 +459,7 @@ int HD2(int32_t size_text, char* text, int32_t size_pattern, char* pattern, int 
   delete fft_pattern;
   delete fft_text;
   delete fft_tmp;
-  for (int i = 0; i < k_nb_letters; ++i)
-      infrequent[i].clear();
-    infrequent->clear();
-    frequent.clear();
+  frequent.clear();
 }
 
 int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
@@ -496,26 +493,31 @@ int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
 		}
 	}
 
-    HD(size_pattern2, pattern2, size_pattern, pattern, &freq, size_res, res);
+  HD(size_pattern2, pattern2, size_pattern, pattern, &freq, size_res, res);
   // ApproxHD(size_pattern2, pattern2, size_pattern, pattern, k_nb_letters, (float)1, size_res, res);
 
-  for (int i = 1; i <= position_max && size_res; ++i){
+  bool stop = false;
+  int i = 1, ret = 0;
+
+  while ( (i <= position_max) && (i <= size_res) && (!stop)) {
+  // for (int i = 1;; ++i){
     if (res[i] < value_max) {
-      delete [] pattern2;
-      delete [] res;
-      return i;
+      stop = true;
+      ret = i;
     }
+    ++i;
   }
+  if (!stop) 
+    ret = 0;
 
   delete [] pattern2;
   delete [] res;
   freq.clear();
   for (int i=0; i<k_nb_letters; ++i)
       infreq[i].clear();
-  infreq->clear();
   delete [] infreq;
 
-  return 0;
+  return ret;
 }
 
 void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,

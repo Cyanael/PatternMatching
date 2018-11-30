@@ -25,6 +25,8 @@ RunRle::RunRle(RunRle *run) {
 	letter_ = run->GetChar();
 }
 
+RunRle::~RunRle() {}
+
 void RunRle::DeleteRunBegin(int period) {
 	position_ += period;
 	size_--;
@@ -90,13 +92,12 @@ Rle::Rle(int p) {
 }
 
 Rle::~Rle() {
-	//  TODO
-	// for (int i = 0; i < period_; ++i) {
-	// 	for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it)
-	// 		delete (*it);
-	// 	rle_[i].clear();
-	// }
-	// delete [] rle_;
+	for (int i = 0; i < period_; ++i) {
+		for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it)
+			delete (*it);
+		rle_[i].clear();
+	}
+	delete [] rle_;
 }
 
 int RleText::AddLetterBegin(int pos, int period, char letter) {
@@ -192,7 +193,7 @@ void Rle::MakeRle(int32_t size_pattern, char *pattern, int32_t size_total) {
 
 
 RleText::RleText(int p) : Rle(p) {
-	list<RunRle*> *t_sec = new list<RunRle*>[p]();
+	list<RunRle*> *t_sec = new list<RunRle*>[period_]();
 	for (int i = 0; i < period_; ++i) {
 		list<RunRle*> *liste = new list<RunRle*>();
 		t_sec[i] = (*liste);
@@ -201,18 +202,12 @@ RleText::RleText(int p) : Rle(p) {
 }
 
 RleText::~RleText() {
-	//  TODO
-	// for (int i = 0; i < period_; ++i) {
-	// 	for (std::list<RunRle*>::iterator it = rle_[i].begin(); it != rle_[i].end(); ++it)
-	// 		delete (*it);
-	// 	rle_[i].clear();
-
-	// 	for (std::list<RunRle*>::iterator it = t_sec_[i].begin(); it != t_sec_[i].end(); ++it)
-	// 		delete (*it);
-	// 	t_sec_[i].clear();
-	// }
-	// delete [] rle_;
-	// delete [] t_sec_;
+	for (int i = 0; i < period_; ++i) {
+		for (std::list<RunRle*>::iterator it = t_sec_[i].begin(); it != t_sec_[i].end(); ++it)
+			delete (*it);
+		t_sec_[i].clear();
+	}
+	delete [] t_sec_;
 }
 
 void RleText::ReorganiseListRun(int32_t step) {
@@ -587,6 +582,7 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     delete [] res_hd;
     for (int i = 0; i < k_nb_letters; ++i)
     	infreq[i].clear();
-    infreq->clear();
+    delete [] infreq;
+    delete [] run_letter_t;
     freq.clear();
 }

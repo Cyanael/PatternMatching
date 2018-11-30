@@ -420,14 +420,14 @@ int main(int argc, char* argv[]) {
         for (int j = 0; j < size_res; ++j) {
             curr_error = 0;
             pos_p = 0;
-            while (curr_error < nb_error_max && pos_p < size_pattern) {
+            while (curr_error <= nb_error_max && pos_p < size_pattern) {
     			if (pattern[pos_p]!=text[j + pos_p]){
     				curr_error++;
     			}
     			pos_p++;
     		}
 
-            if (curr_error >= nb_error_max)
+            if (curr_error > nb_error_max)
                 res_naif[j] = -1;
             else
                 res_naif[j] = curr_error;

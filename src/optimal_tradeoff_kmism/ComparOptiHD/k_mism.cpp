@@ -143,98 +143,137 @@ int main(int argc, char* argv[]) {
 
 	chrono::time_point<chrono::system_clock> start, mid, end;
     chrono::duration<double> texec;
-    start = chrono::system_clock::now();
+
 
     int32_t size_res, size_text;
-	char *pattern, *text;
-	int *res;
+	char *text;
 
 	// Open and read the files containing the pattern
 	ReadFile(file_text, &size_text, &text);
 
+	size_res = size_text - size_pattern +1;
+	int *res = new int[size_res];
+	int *res_hd = new int[size_res]();
+	int *res_naif = new int[size_res]();
+	InitTabZeros(size_res, res);
 
-	float ave_rle = 0, ave_hd = 0;
+	float ave_rle = 0, ave_hd = 0, ave_naif;
+
 
 	int nb_loop = 20;
 	for (int i = 0; i < nb_loop; ++i) {
+	    start = chrono::system_clock::now();
+		char *pattern;
 
-	LoadPattern(size_text, text, size_pattern, &pattern);
+		LoadPattern(size_text, text, size_pattern, &pattern);
 
-	// Search for an approximate period
-	int approx_period = findApproximatePeriod(size_pattern, pattern,
-		k_nb_letters, 1, error_k, 8*error_k);
+		// Search for an approximate period
+		int approx_period = findApproximatePeriod(size_pattern, pattern,
+			k_nb_letters, 1, error_k, 8*error_k);
 
 		mid = chrono::system_clock::now();
 		texec = mid-start;
-		cout << endl << "Approx time : " << texec.count() << "s" << endl;
+		// cout << endl << "Approx time : " << texec.count() << "s" << endl;
 		end = mid;
 
-	//  Case 1 in the papermid
-	if (approx_period == 0) {
-		cout << "There is no 4k-period" << endl;
 		assert(size_text >= size_pattern &&
-				"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
-		size_res = size_text - size_pattern +1;
-		res = new int[size_res];
-		InitTabZeros(size_res, res);
+							"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
 
-		NoSmall4kPeriod(size_text, text, size_pattern, pattern, k_nb_letters,
-			error_k, size_res, res);
+		//  Case 1 in the papermid
+		if (approx_period == 0) {
+			cout << "There is no 4k-period" << endl;
 
-	    // WriteOuput(size_res, res, error_k, stream_out);
-		}
-	else {  // There is a 8k-period <= k, case 2 in the paper
-		cout << "There is a 8k-period" << endl;
-		// Read text
-		// ifstream stream_text(file_text.c_str(), ios::in);
-		// if (!stream_text) {
-		// 	cout << "Can't open text file." << endl;
-		// 	return 0;
-		// }
+			NoSmall4kPeriod(size_text, text, size_pattern, pattern, k_nb_letters,
+				error_k, size_res, res);
 
-		// stream_text >> size_text;
-		assert(size_text >= size_pattern &&
-						"The text's length must be longer or equal to the pattern's. Did you invert the text and pattern calls?");
-
-
-		size_res = size_text - size_pattern +1;
-		// size_res = size_pattern +1;
-		res = new int[size_res];
-		InitTabZeros(size_res, res);
-
-
+		    // WriteOuput(size_res, res, error_k, stream_out);
+			}
+		else {  // There is a 8k-period <= k, case 2 in the paper
+			cout << "There is a 8k-period" << endl;
 			Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
-							approx_period, size_res, res);
+								approx_period, size_res, res);
+		}
+
+	    end = chrono::system_clock::now();
+	    texec = end-start;
+	    // cout << endl << "Total time : " << texec.count() << "s" << endl;
+	    ave_rle += texec.count();
+	    mid = chrono::system_clock::now();
 
 
+
+		HD2(size_text, text, size_pattern, pattern, k_nb_letters, size_res, res_hd);
+
+		mid = chrono::system_clock::now();
+		texec = mid-start;
+		cout << endl << "HD : " << texec.count() << "s ";
+		end = mid;
+		ave_hd += texec.count();
+
+		bool verif = true;
+        int pos = 0;
+        while (verif && pos < size_res) {
+            if (res[pos] != (size_pattern - res_hd[pos]))
+                verif = false;
+            pos++;
+        }
+        if (verif)
+            cout << "== " << endl;
+        else
+            cout << "!= " << endl;      
+
+   		mid = chrono::system_clock::now();
+
+		// naive algo
+        int curr_error, pos_p;
+        for (int j = 0; j < size_res; ++j) {
+            curr_error = 0;
+            pos_p = 0;
+            while (curr_error < error_k && pos_p < size_pattern) {
+    			if (pattern[pos_p]!=text[j + pos_p]){
+    				curr_error++;
+    			}
+    			pos_p++;
+    		}
+
+            if (curr_error >= error_k)
+                res_naif[j] = -1;
+            else
+                res_naif[j] = curr_error;
+        }
+
+        end = chrono::system_clock::now();
+        texec = end-mid;
+        cout << "Naif : " << texec.count() << "s ";
+        ave_naif += texec.count();
+
+        verif = true;
+        pos = 0;
+        while (verif && pos < size_res) {
+        	// cout << res[pos] << " " << res_naif[pos] << endl;
+            if (res[pos] != res_naif[pos] && (res[pos] < error_k))
+                verif = false;
+            pos++;
+        }
+        if (verif)
+            cout << "== " << endl;
+        else
+            cout << "!= " << endl;
+
+
+	    delete [] pattern;
 	}
 
-    end = chrono::system_clock::now();
-    texec = end-start;
-    cout << endl << "Total time : " << texec.count() << "s" << endl;
-    mid = chrono::system_clock::now();
-    ave_rle += texec.count();
-
-	int *res_hd = new int[size_res]();
-
-
-	HD2(size_text, text, size_pattern, pattern, k_nb_letters, size_res, res);
-
-	mid = chrono::system_clock::now();
-	texec = mid-start;
-	cout << endl << "HD : " << texec.count() << "s" << endl;
-	end = mid;
-	ave_hd += texec.count();
-    
-}
 	ave_hd /= nb_loop;
 	ave_rle /= nb_loop;
+	ave_naif /=nb_loop;
 	cout << endl << "Temps moyen RLE : " << ave_rle << endl;
 	cout << "Temps moyen HD : " << ave_hd << endl;
+	cout << "Temps moyen naif : " << ave_naif << endl;
 
     delete [] text;
-    delete [] pattern;
     delete [] res;
+    delete [] res_hd;
 
     return 0;
 }
