@@ -355,72 +355,72 @@ int main(int argc, char* argv[]) {
 
         LoadPattern(size_text, text_pattern, size_pattern, &pattern);
 
-        InitTable(size_suff_array, suff_array);
-        InitTable(size_suff_array, inv_suff_array);
-        InitTable(size_suff_array, lcp);
-        InitTable(size_res, res);
-        for (int j = 0; j < size_suff_array; ++j)
-            lu[j].clear();
-
-
-        // cout << "textpat : " << size_suff_array << endl ;
+        // InitTable(size_suff_array, suff_array);
+        // InitTable(size_suff_array, inv_suff_array);
+        // InitTable(size_suff_array, lcp);
+        // InitTable(size_res, res);
         // for (int j = 0; j < size_suff_array; ++j)
-        //     cout << text_pattern[j];
-        // cout << endl;
-
-        start = chrono::system_clock::now();
-
-        BuildSuffixArray(text_pattern, size_suff_array, &suff_array);
-
+        //     lu[j].clear();
+        //
+        //
+        // // cout << "textpat : " << size_suff_array << endl ;
+        // // for (int j = 0; j < size_suff_array; ++j)
+        // //     cout << text_pattern[j];
+        // // cout << endl;
+        //
+        // start = chrono::system_clock::now();
+        //
+        // BuildSuffixArray(text_pattern, size_suff_array, &suff_array);
+        //
+        // end = chrono::system_clock::now();
+        // texec = end-start;
+        // // cout << "   SA : " << texec.count() << endl;
+        // mid = end;
+        // time_SA += texec.count();
+        //
+        // BuildInvSuffArray(size_suff_array, suff_array, &inv_suff_array);
+        //
+        // end = chrono::system_clock::now();
+        // texec = end-mid;
+        // // cout << "   ISA : " << texec.count() << endl;
+        // mid = end;
+        // time_ISA += texec.count();
+        //
+        // Kasai(text_pattern, size_suff_array, suff_array, &lcp, inv_suff_array);
+        //
+        // end = chrono::system_clock::now();
+        // texec = end-mid;
+        // // cout << "   LCP : " << texec.count() << endl;
+        // mid = end;
+        // time_LCP += texec.count();
+        //
+        // BuildLU(lcp, size_suff_array, lu);
+        //
+        // end = chrono::system_clock::now();
+        // texec = end-mid;
+        // // cout << "   LU : " << texec.count() << endl;
+        // mid = end;
+        // time_LU += texec.count();
+        // end = chrono::system_clock::now();
+        // texec = end-start;
+        // // cout << "Init : " << texec.count() << endl;
+        // mid = end;
+        // time_init += texec.count();
+        //
+        // int nb_matches = Kangaroo(size_text, size_pattern, size_suff_array,
+        //                 inv_suff_array, lcp, lu, size_res, nb_error_max, res);
+        //
         end = chrono::system_clock::now();
-        texec = end-start;
-        // cout << "   SA : " << texec.count() << endl;
+        // texec = end-mid;
+        // // cout << "Computation : " << texec.count() << endl;
+        // // cout << "Nb matches = " << nb_matches << endl;
         mid = end;
-        time_SA += texec.count();
+        // time_comput += texec.count();
+        //
+        // texec = end-start;
+        // cout << "Total : " << texec.count() + tinit.count() << endl;
+        // time_tot += texec.count() + tinit.count();
 
-        BuildInvSuffArray(size_suff_array, suff_array, &inv_suff_array);
-
-        end = chrono::system_clock::now();
-        texec = end-mid;
-        // cout << "   ISA : " << texec.count() << endl;
-        mid = end;
-        time_ISA += texec.count();
-
-        Kasai(text_pattern, size_suff_array, suff_array, &lcp, inv_suff_array);
-
-        end = chrono::system_clock::now();
-        texec = end-mid;
-        // cout << "   LCP : " << texec.count() << endl;
-        mid = end;
-        time_LCP += texec.count();
-
-        BuildLU(lcp, size_suff_array, lu);
-
-        end = chrono::system_clock::now();
-        texec = end-mid;
-        // cout << "   LU : " << texec.count() << endl;
-        mid = end;
-        time_LU += texec.count();
-        end = chrono::system_clock::now();
-        texec = end-start;
-        // cout << "Init : " << texec.count() << endl;
-        mid = end;
-        time_init += texec.count();
-
-        int nb_matches = Kangaroo(size_text, size_pattern, size_suff_array,
-                        inv_suff_array, lcp, lu, size_res, nb_error_max, res);
-
-        end = chrono::system_clock::now();
-        texec = end-mid;
-        // cout << "Computation : " << texec.count() << endl;
-        // cout << "Nb matches = " << nb_matches << endl;
-        mid = end;
-        time_comput += texec.count();
-
-        texec = end-start;
-        cout << "Total : " << texec.count() + tinit.count() << endl;
-        time_tot += texec.count() + tinit.count();
-            
 
         // naive algo
         int curr_error, pos_p;
@@ -457,7 +457,7 @@ int main(int argc, char* argv[]) {
         else
             cout << "!= ";
 
-        
+
         mid = chrono::system_clock::now();
 
         HD(size_text, text, size_pattern, pattern, size_res, res_naif);

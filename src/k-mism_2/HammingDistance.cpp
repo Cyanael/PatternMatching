@@ -88,33 +88,33 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 				int *res) {
 	InitTabZeros(size_res, res);
 
-	chrono::time_point<chrono::system_clock> start, mid, end;
-	chrono::duration<double> texec;
+	// chrono::time_point<chrono::system_clock> start, mid, end;
+	// chrono::duration<double> texec;
 	char current_char;
 	for (auto j = frequent->begin(); j != frequent->end(); ++j) {
 		current_char = *j;
 
-		start = chrono::system_clock::now();
+		// start = chrono::system_clock::now();
 		MatchLetterText(size_text, text, current_char, fft_text);
 		MatchLetterText(size_pattern, pattern, current_char, fft_pattern);
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	bit vect : " << texec.count() << "s" << endl;
-		mid = end;
+		// end = chrono::system_clock::now();
+		// texec = end-mid;
+		// cout << "	bit vect : " << texec.count() << "s" << endl;
+		// mid = end;
 
 		ReversePattern(size_pattern, fft_pattern);
 		fft_text->ExecFFT();
 		fft_pattern->ExecFFT();
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	fft exec : " << texec.count() << "s" << endl;
-		mid = end;
+		// end = chrono::system_clock::now();
+		// texec = end-mid;
+		// cout << "	fft exec : " << texec.count() << "s" << endl;
+		// mid = end;
 
 		fft_res->FFTMultiplication(fft_text, fft_pattern);
-		end = chrono::system_clock::now();
-		texec = end-mid;
-		cout << "	mult + iexec : " << texec.count() << "s" << endl;
-		mid = end;
+		// end = chrono::system_clock::now();
+		// texec = end-mid;
+		// cout << "	mult + iexec : " << texec.count() << "s" << endl;
+		// mid = end;
 
 		fft_res->ExecFFT();
 
@@ -124,10 +124,10 @@ void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
 			res[i]+= (fft_res->getVal(i+size_pattern-1)+0.5);
 		}
 
-			end = chrono::system_clock::now();
-			texec = end-mid;
-			cout << "	write res : " << texec.count() << "s" << endl;
-			mid = end;
+			// end = chrono::system_clock::now();
+			// texec = end-mid;
+			// cout << "	write res : " << texec.count() << "s" << endl;
+			// mid = end;
 	}
 }
 

@@ -1,7 +1,7 @@
 CXX=		g++
 CXXFLAGS=	-std=c++11 -O3
 PROG=		test
-LIBS=		-lfftw3 -lm
+LIBS=		-L/home/cosc/tr18544/linux/Projects/Lib/fftw3/lib -lfftw3 -lm
 
 # .SUFFIXES:.o
 

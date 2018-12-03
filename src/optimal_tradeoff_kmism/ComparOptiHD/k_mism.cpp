@@ -157,10 +157,10 @@ int main(int argc, char* argv[]) {
 	int *res_naif = new int[size_res]();
 	InitTabZeros(size_res, res);
 
-	float ave_rle = 0, ave_hd = 0, ave_naif;
+	float ave_rle = 0, ave_hd = 0, ave_naif = 0;
 
 
-	int nb_loop = 20;
+	int nb_loop = 5;
 	for (int i = 0; i < nb_loop; ++i) {
 	    start = chrono::system_clock::now();
 		char *pattern;
@@ -220,7 +220,7 @@ int main(int argc, char* argv[]) {
         if (verif)
             cout << "== " << endl;
         else
-            cout << "!= " << endl;      
+            cout << "!= " << endl;
 
    		mid = chrono::system_clock::now();
 
@@ -264,12 +264,20 @@ int main(int argc, char* argv[]) {
 	    delete [] pattern;
 	}
 
+	mid = chrono::system_clock::now();
+	texec = mid-start;
+	cout << endl << "HD : " << texec.count() << "s" << endl;
+	end = mid;
+	ave_hd += texec.count();
+
+// }
 	ave_hd /= nb_loop;
 	ave_rle /= nb_loop;
 	ave_naif /=nb_loop;
-	cout << endl << "Temps moyen RLE : " << ave_rle +0.83<< endl;
-	cout << "Temps moyen HD : " << ave_hd + 0.83 << endl;
-	cout << "Temps moyen naif : " << ave_naif + 0.83 << endl;
+	cout << endl << "Temps moyen RLE : " << ave_rle << endl;
+	cout << "Temps moyen HD : " << ave_hd << endl;
+	cout << "Temps moyen naif : " << ave_naif << endl;
+	cout << "Ajouter 0.83s pour de writeOutput (lorsque n = 8M)" << endl;
 
     delete [] text;
     delete [] res;

@@ -505,8 +505,7 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     	}
     }
 
-	//  TODO : find threshold
-    int threshold = size_text*25;
+    int threshold = size_text*5;
 	vector<char> freq;
 
 	int nb_freq_letter = 0;
@@ -549,12 +548,14 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     InitTabZeros(size_res_star, res_star);
 
     // compute pair of runs in T' and P*
+	// int nb_upd = 0;
     for (int i = 0; i < t_rle->GetPeriod(); ++i) {
     	for (std::list<RunRle*>::iterator it = t_rle->GetList(i)->begin(); it != t_rle->GetList(i)->end(); ++it) {
     		c = (*it)->GetChar();
     		for (int k = 0; k < infreq[CharToInt(c)].size(); ++k) {
     			runP = infreq[CharToInt(c)][k];
     			UpdateDeriv((*it), runP, size_deriv, deriv);
+				// nb_upd++;
     		}
     	}
     }
@@ -565,10 +566,11 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     		for (int k = 0; k < infreq[CharToInt(c)].size(); ++k) {
     			runP = infreq[CharToInt(c)][k];
     			UpdateDeriv((*it), runP, size_deriv, deriv);
+				// nb_upd++;
     		}
     	}
     }
-
+	// cout << "nb updates " << nb_upd << endl;
     int nb_$ = m1 * approx_period - size_pattern;
 
     ComputeResStar(t_star, p_rle->GetSize(), p_star, nb_freq_letter, nb_$,
