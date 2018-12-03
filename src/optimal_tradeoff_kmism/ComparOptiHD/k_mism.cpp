@@ -270,7 +270,6 @@ int main(int argc, char* argv[]) {
 	end = mid;
 	ave_hd += texec.count();
 
-// }
 	ave_hd /= nb_loop;
 	ave_rle /= nb_loop;
 	ave_naif /=nb_loop;
