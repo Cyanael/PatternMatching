@@ -267,9 +267,9 @@ int main(int argc, char* argv[]) {
 	ave_hd /= nb_loop;
 	ave_rle /= nb_loop;
 	ave_naif /=nb_loop;
-	cout << endl << "Temps moyen RLE : " << ave_rle << endl;
-	cout << "Temps moyen HD : " << ave_hd << endl;
-	cout << "Temps moyen naif : " << ave_naif << endl;
+	cout << endl << "Temps moyen RLE : " << ave_rle +0.83<< endl;
+	cout << "Temps moyen HD : " << ave_hd + 0.83 << endl;
+	cout << "Temps moyen naif : " << ave_naif + 0.83 << endl;
 
     delete [] text;
     delete [] res;
