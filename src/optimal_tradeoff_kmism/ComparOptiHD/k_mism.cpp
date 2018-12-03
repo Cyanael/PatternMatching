@@ -77,7 +77,7 @@ void ReadFile(string file, int32_t *size_pattern, char **pattern) {
 		cout << "Can't open pattern file." << endl;
 }
 
-void LoadPattern(int32_t size_text, char *text_pattern, int32_t size_pattern,
+void LoadPattern(int32_t size_text, char *text, int32_t size_pattern,
                 char **pattern) {
 
     (*pattern) = new char[size_pattern]();
@@ -89,8 +89,8 @@ void LoadPattern(int32_t size_text, char *text_pattern, int32_t size_pattern,
 
     int32_t begin = random()%(size_text - size_pattern);
     for (int32_t i = 0; i < size_pattern; ++i){
-        (*pattern)[i] = text_pattern[begin + i];
-        text_pattern[size_text + i] = text_pattern[begin + i];
+        (*pattern)[i] = text[begin + i];
+        // text[size_text + i] = text[begin + i];
     }
 }
 
