@@ -425,7 +425,7 @@ void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern,
 
 
 int HD2(int32_t size_text, char* text, int32_t size_pattern, char* pattern, int k_nb_letters, int32_t size_res, int* res) {
-  
+
   // Init size_fft: the lenght used for the FFTs
   // It is a power of 2 (see FFTW documentation)
   int32_t size_fft = UpperPowOfTwo(size_text);
@@ -507,7 +507,7 @@ int findApproximatePeriod(int32_t size_pattern, char *pattern, int k_nb_letters,
     }
     ++i;
   }
-  if (!stop) 
+  if (!stop)
     ret = 0;
 
   delete [] pattern2;

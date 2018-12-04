@@ -22,6 +22,7 @@ The pattern/text input file must contain its lenght then the pattern/text
 
 #include "HammingDistance.hpp"
 #include "LCP.hpp"
+#include "Tools.hpp"
 
 using namespace std;
 
@@ -112,7 +113,7 @@ int SortCaract(int32_t size_pattern, char *pattern, int32_t threshold_freq,
 			vector<int32_t> v = {i};
 			sortedChar[CharToInt(pattern[i])] = v;
 		}
-		else 
+		else
 			sortedChar[CharToInt(pattern[i])].push_back(i);
 	}
 	int freqChar = 0;

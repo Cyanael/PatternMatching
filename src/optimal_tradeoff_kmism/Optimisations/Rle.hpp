@@ -13,7 +13,7 @@ using namespace std;
 
 class RunRle {
 	private:
-		int32_t position_; // where the run starts in the text/pattern 
+		int32_t position_; // where the run starts in the text/pattern
 		int size_;
 		char letter_;
 
@@ -48,24 +48,24 @@ class Rle {
 		Rle();
 		Rle(int period);
 		~Rle();
-		
+
 		// return 1 if the function add a run, 0 else
 		int AddLetterEnd(int pos, int period, char letter);
 
-		// Put the starting position of every run in the reading order 
+		// Put the starting position of every run in the reading order
 		void SetPositionRuns();
 
 		// construct the RLE()
 		void MakeRle(int32_t size_pattern, char *pattern, int32_t size_total);
 
 		list<RunRle*>* GetList(int period) const;
-		
+
 		// total number of letter in the class
 		int32_t GetSize() const;
 		int GetPeriod() const;
 
-		//  nb of runs in the pos_periodth list 
-		int GetSizeList(int pos_period) const; 
+		//  nb of runs in the pos_periodth list
+		int GetSizeList(int pos_period) const;
 		void PrintRle() const;
 		void DoString(int32_t *size, char **str) const;
 };
@@ -90,7 +90,7 @@ class RleText : public Rle {
 		// add T" after T' to construct T*
 		void ConcatTSec();
 
-		// construct T' and initialise i_l and i_r : 
+		// construct T' and initialise i_l and i_r :
 		// search for the longest suffix T_l of T[i_l, m-1] where run_l(T_l) <= 6k
 		// then the longest prefixe T_r of T[m, i_r] where run_l(T_r) <=6k
 		// pad with '#' to have a lenght divisible by period_

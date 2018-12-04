@@ -325,6 +325,10 @@ void ComputeLCP(int32_t size_text, char *text, int32_t size_pattern,
     Kangaroo(size_text, size_pattern, size_suff_array, inv_suff_array, lcp,
                 lu, size_res, nb_error_max, dk, res);
 
+    end = chrono::system_clock::now();
+    texec = end-mid;
+    cout << "Queries : " << texec.count() << endl;
+
     delete [] text_pattern;
     delete [] suff_array;
     delete [] inv_suff_array;

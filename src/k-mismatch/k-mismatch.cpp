@@ -1,5 +1,6 @@
-/* Author : Bogdan Manghiuc
- Modified by Tatiana Rocher
+/* Copyright : GNU GPL V3
+Author : Bogdan Manghiuc
+Modified by Tatiana Rocher
 
 From the paper: Clifford, R., Fontaine A., Porat E., Sach B., Starikovskaya T. (2016)
 The k-mismatch problem revisited In Proceedings of the twenty-seventh annual
@@ -9,6 +10,7 @@ Algorithm that solves an instance of the k-mismatch problem when the pattern (P)
 has approximate period l <= k
 We assume that |P| = m
 We assume that |T| = 2m
+
 INPUT Text: text
 INPUT Pattern: pattern k with |text| = 2 * |pattern|
 

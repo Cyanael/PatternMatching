@@ -1,5 +1,5 @@
 CXX=		g++
-CXXFLAGS=	-std=c++11 -g
+CXXFLAGS=	-std=c++11 -O3
 PROG=		opti
 LIBS=		-L/home/cosc/tr18544/linux/Projects/Lib/fftw3/lib -lfftw3 -lm
 
