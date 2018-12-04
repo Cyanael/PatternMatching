@@ -32,7 +32,7 @@ int k_nb_letters = 128;
 
 
 bool Usage() {
-	cout << endl << "How to run: ./exec text pattern error optionalOutput ";
+	cout << endl << "How to run: ./exec text_file text_size pattern_size error optionalOutput ";
 	cout << "-p optinalPlan" << endl;
 	cout << "/!\\ The text (or pattern) input file must ";
 	cout << "contain its lenght first, then the text (or pattern)." << endl;
@@ -55,20 +55,20 @@ void LoadSavedPlan(char* file) {
 }
 
 // Intialise the pattern and size_pattern from a file
-void ReadFile(string file, int32_t *size_pattern, char **pattern) {
+void ReadFile(string file, int32_t size_text, char **text) {
 	ifstream stream_file(file.c_str(), ios::in);
 	char character;
 
 	if (stream_file) {
 		int size_tmp;
 		stream_file >> size_tmp;
-		(*size_pattern) = size_tmp;
+		// (*size_text) = size_tmp;
 
 		stream_file.get(character);  // eliminate the \n character
-		(*pattern) = new char[size_tmp]();
-		for (int32_t i = 0; i < size_tmp; ++i) {
+		(*text) = new char[size_tmp]();
+		for (int32_t i = 0; i < size_text; ++i) {
 			stream_file.get(character);
-			(*pattern)[i] = character;
+			(*text)[i] = character;
 		}
 
 		stream_file.close();
@@ -120,14 +120,15 @@ void WriteOuput(int32_t size_res, int *res, int error_k,
 
 
 int main(int argc, char* argv[]) {
-	if (argc < 4) {
+	if (argc < 5) {
 		Usage();
 		return 0;
 	}
 
 	string file_text = argv[1];
-	int32_t size_pattern = atoi(argv[2]);
-	int error_k = atoi(argv[3]);
+	int32_t size_text = atoi(argv[2]);
+	int32_t size_pattern = atoi(argv[3]);
+	int error_k = atoi(argv[4]);
 
 	char c;
 	while((c = getopt(argc, argv, "p:")) !=EOF) {
@@ -145,11 +146,13 @@ int main(int argc, char* argv[]) {
     chrono::duration<double> texec;
 
 
-    int32_t size_res, size_text;
+    int32_t size_res;
 	char *text;
 
-	// Open and read the files containing the pattern
-	ReadFile(file_text, &size_text, &text);
+	// Open and read the text
+	ReadFile(file_text, size_text, &text);
+	// cout << "text_size : " << size_text << endl;
+	// cout << text << endl;
 
 	size_res = size_text - size_pattern +1;
 	int *res = new int[size_res];
@@ -181,7 +184,7 @@ int main(int argc, char* argv[]) {
 
 		//  Case 1 in the papermid
 		if (approx_period == 0) {
-			cout << "There is no 4k-period" << endl;
+			cout << endl << "There is no 4k-period" << endl;
 
 			NoSmall4kPeriod(size_text, text, size_pattern, pattern, k_nb_letters,
 				error_k, size_res, res);
@@ -189,14 +192,14 @@ int main(int argc, char* argv[]) {
 		    // WriteOuput(size_res, res, error_k, stream_out);
 			}
 		else {  // There is a 8k-period <= k, case 2 in the paper
-			cout << "There is a 8k-period" << endl;
+			cout << endl << "There is a 8k-period" << endl;
 			Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
 								approx_period, size_res, res);
 		}
 
 	    end = chrono::system_clock::now();
 	    texec = end-start;
-	    // cout << endl << "Total time : " << texec.count() << "s" << endl;
+	    cout << "Opti : " << texec.count() << "s" << endl;
 	    ave_rle += texec.count();
 	    mid = chrono::system_clock::now();
 
@@ -206,7 +209,7 @@ int main(int argc, char* argv[]) {
 
 		mid = chrono::system_clock::now();
 		texec = mid-start;
-		cout << endl << "HD : " << texec.count() << "s ";
+		cout << "HD : " << texec.count() << "s ";
 		end = mid;
 		ave_hd += texec.count();
 
