@@ -50,13 +50,19 @@ void MatchLetterText(int32_t size, char *text, char letter,
 
 void ReversePattern(int32_t size, FFT_wak *fft_pattern);
 
-void ComputeFreq(int32_t size_pattern, int32_t size_text, int32_t size_res,
+void ComputeFreqApprox(int32_t size_pattern, int32_t size_text, int32_t size_res,
         char *text, char *pattern, vector<char> *frequent, int *map,
         FFT_wak *fft_text, FFT_wak *fft_pattern, FFT_wak *fft_res,
         int *res);
 
-void ComputeInfreq(int32_t size_text, char *text, int32_t size_res,
+void ComputeInfreqApprox(int32_t size_text, char *text, int32_t size_res,
         int *map, vector<int32_t> *infreq, int *res);
+
+void ComputeFreqHD(int32_t size_text, char *text, int32_t size_pattern, char *pattern, 
+         vector<char> *frequent, int32_t size_res, int *res);
+
+void ComputeInfreqHD(int32_t size_text, char *text, int32_t size_res,
+        vector<int32_t> *infreq, int *res);
 
 void KeepSmaller(int32_t size_res, int *tmp_res, int *res);
 
@@ -70,9 +76,6 @@ int findApproximatePeriod(int32_t size_pattern, char *pattern,  int k_nb_letters
 void NoSmall4kPeriod(int32_t size_text, char *text, int32_t size_pattern,
                       char *pattern, int k_nb_letters, int error_k,
                       int32_t size_res, int *res) ;
-
-void HD(int32_t size_text, char *text, int32_t size_pattern, char *pattern, 
-         vector<char> *frequent, int32_t size_res, int *res);
 
 int NaiveHD(char *text, int32_t size_pattern, char *pattern, int32_t pos);
 
