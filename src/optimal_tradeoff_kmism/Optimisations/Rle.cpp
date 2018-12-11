@@ -438,12 +438,6 @@ void ComputeResStar(char* t_star, int32_t size_p_star, char* p_star,
 					int32_t size_res, int* res) {
 	res[0] = NaiveHD(t_star, size_p_star, p_star, 0) - nb_freq_letter + res_hd[0] - nb_$;
 	res[1] = NaiveHD(t_star, size_p_star, p_star, 1) - nb_freq_letter + res_hd[1] - nb_$;
-
-	cout << "NaiveHD [0]=" << NaiveHD(t_star, size_p_star, p_star, 0) << endl;
-	cout << "NaiveHD [1]=" << NaiveHD(t_star, size_p_star, p_star, 1) << endl;
-	cout << "nb_freq_letter=" << nb_freq_letter << " nb_$=" << nb_$ << endl;
-	cout << "res_hd[0]=" << res_hd[0] << " res_hd[1]=" << res_hd[1] << endl;
-	cout << "res[0]=" << res[0] << " res[1]=" << res[1] << endl;
 	for (int i = 2; i < size_res; ++i) {
 		res[i] = -deriv[i] + 2 * res[i-1] - res[i-2];
 	}
@@ -526,10 +520,10 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     	// else : the vector stays in infreq and we have all the runs of every infreq letter
     }
 
-    cout << "Liste des freq : " ;
-    for (int i = 0; i < freq.size(); ++i)
-	    cout << freq[i] << " ";
-	cout << endl;
+ //    cout << "Liste des freq : " ;
+ //    for (int i = 0; i < freq.size(); ++i)
+	//     cout << freq[i] << " ";
+	// cout << endl;
     // cout << "Number of frequent letters : " << nb_freq_letter << endl;
 
 	//init T* and P*
@@ -577,11 +571,6 @@ void Small8kPeriod(int32_t size_text, char *text, int32_t size_pattern,
     		}
     	}
     }
-
-    cout << "up ";
-    for (int i= 0; i < size_deriv; ++i)
-    cout << deriv[i] << " ";
-	cout << endl;
 	// cout << "nb updates " << nb_upd << endl;
     int nb_$ = m1 * approx_period - size_pattern;
 
