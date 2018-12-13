@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 
 using namespace std;
@@ -18,7 +19,22 @@ int main(int argc, char* argv[]) {
     int32_t size_file = atoi(argv[1]);
     int period = atoi(argv[2]);
 	int nb_blocs = atoi(argv[3]);
-	string file_out = argv[4];
+	// string file_out = argv[4];
+
+	stringstream ss;
+	ss << "p";
+
+	if (size_file > 1000000)
+		ss << (size_file/1000000) << "M_";
+	else if (size_file > 1000)
+		ss << (size_file/1000) << "K_";
+	else
+		ss << size_file << "_";
+	ss << period << "_" << nb_blocs << ".txt";
+
+
+	string file_out = ss.str();
+
 
     // Open output file
     ofstream stream_out(file_out.c_str(), ios::out | ios::trunc);
