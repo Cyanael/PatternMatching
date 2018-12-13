@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
 
 	// Search for an approximate period
 	int approx_period = findApproximatePeriod(size_pattern, pattern,
-		k_nb_letters, 1, error_k, error_k); // TODO: remettre 8*errok_k
+		k_nb_letters, 1, error_k, 500*error_k); // TODO: remettre 8*errok_k
 	cout << "period: " << approx_period << endl;
 
 		mid = chrono::system_clock::now();
@@ -157,6 +157,7 @@ int main(int argc, char* argv[]) {
 		cout << endl << "Approx time : " << texec.count() << "s" << endl;
 		end = mid;
 
+	int nb_updates = 0;
 	//  Case 1 in the papermid
 	if (approx_period == 0) {
 		cout << "There is no 4k-period" << endl;
@@ -187,7 +188,7 @@ int main(int argc, char* argv[]) {
 
 		int32_t rest = size_text % size_pattern;
 		int32_t nb_iter = ceil(size_text/(size_pattern+1));
-		// cout << "nb_iter " << nb_iter << endl;
+		cout << "nb_iter " << nb_iter << endl;
 		size_text = 2*size_pattern;
 		// cout << "size_text " << size_text << endl;
 
@@ -199,6 +200,7 @@ int main(int argc, char* argv[]) {
 			// text[i] = character;
 			stream_text >> text[i];
 		}
+
 
 
 		size_res = size_pattern +1;
@@ -228,7 +230,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			Small8kPeriod(size_text, text, size_pattern, pattern, k_nb_letters, error_k,
-							approx_period, size_res, res);
+							approx_period, size_res, res, &nb_updates);
 
 		    WriteOuput(size_pattern+1, res, error_k, stream_out);
 
@@ -239,6 +241,8 @@ int main(int argc, char* argv[]) {
 		}
 		stream_text.close();
 	}
+	cout << "nb updates " << nb_updates << endl;
+
 
     end = chrono::system_clock::now();
 	texec = end-mid;

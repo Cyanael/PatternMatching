@@ -464,9 +464,9 @@ void ReorganiseRes(int32_t i_l, int32_t i_r, int period,
 
 
 
-void Small8kPeriod(int32_t size_text, int *text, int32_t size_pattern,
+ Small8kPeriod(int32_t size_text, int *text, int32_t size_pattern,
 					int *pattern, int k_nb_letters, int error_k, int approx_period,
-					int32_t size_res, int *res) {
+					int32_t size_res, int *res, int *nb_updates) {
 
 	// init i_l and i_r to find T*
     int32_t i_l, i_r, m1;
@@ -519,6 +519,8 @@ void Small8kPeriod(int32_t size_text, int *text, int32_t size_pattern,
     	}
     	// else : the vector stays in infreq and we have all the runs of every infreq letter
     }
+	freq.push_back(0);
+	infreq[0].clear();
 
  //    cout << "Liste des freq : " ;
  //    for (int i = 0; i < freq.size(); ++i)
@@ -558,14 +560,14 @@ void Small8kPeriod(int32_t size_text, int *text, int32_t size_pattern,
     InitTabZeros(size_res_star, res_star);
 
     // compute pair of runs in T' and P*
-	int nb_upd = 0;
+	// int nb_upd = 0;
     for (int i = 0; i < t_rle->GetPeriod(); ++i) {
     	for (std::list<RunRle*>::iterator it = t_rle->GetList(i)->begin(); it != t_rle->GetList(i)->end(); ++it) {
     		c = (*it)->GetChar();
     		for (int k = 0; k < infreq[c].size(); ++k) {
     			runP = infreq[c][k];
     			UpdateDeriv((*it), runP, size_deriv, deriv);
-				nb_upd++;
+				(*nb_updates)++;
     		}
     	}
     }
@@ -576,11 +578,11 @@ void Small8kPeriod(int32_t size_text, int *text, int32_t size_pattern,
     		for (int k = 0; k < infreq[c].size(); ++k) {
     			runP = infreq[c][k];
     			UpdateDeriv((*it), runP, size_deriv, deriv);
-				nb_upd++;
+				(*nb_updates)++;
     		}
     	}
     }
-	cout << "nb updates " << nb_upd << endl;
+	// cout << "nb updates " << nb_upd << endl;
     int nb_$ = m1 * approx_period - size_pattern;
 
     ComputeResStar(t_star, p_rle->GetSize(), p_star, nb_freq_letter, nb_$,

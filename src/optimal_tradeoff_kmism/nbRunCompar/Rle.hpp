@@ -108,7 +108,7 @@ class RleText : public Rle {
 
 void Small8kPeriod(int32_t size_text, int *text, int32_t size_pattern,
 					int *pattern, int k_nb_letters, int error_k, int approx_period,
-					int32_t size_res, int *res);
+					int32_t size_res, int *res, int *nb_updates);
 
 void ComputeResStar(int* text, int32_t size_pattern, int* pattern,
 					int nb_freq_letters, int nb_$,

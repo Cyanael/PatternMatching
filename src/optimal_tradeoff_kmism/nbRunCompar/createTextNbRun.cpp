@@ -34,12 +34,18 @@ int main(int argc, char* argv[]) {
 	bool pair= true;
 
     for (int i =0; i < nb_blocs; ++i) {
+		// cout << "bloc " << i << " pair : " << pair << endl;
 		for (int j = 0; j < period ; ++j) {
-			if (pair)
+			// cout << "write ";
+			if (pair) {
+				// cout << (i*period + j) << " "<< endl;
 				stream_out << ((i*period + j) % period) << " ";
-			else
+			}
+			else {
+				// cout << (i*period +j+1) << endl;
 				stream_out << ((i*period +j+1) % period) << " ";
 			}
+		}
 		nbRunTotal -= period;
 		if (nbRunTotal >= period)
 			pair = !pair;
