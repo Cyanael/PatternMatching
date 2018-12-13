@@ -464,7 +464,7 @@ void ReorganiseRes(int32_t i_l, int32_t i_r, int period,
 
 
 
- Small8kPeriod(int32_t size_text, int *text, int32_t size_pattern,
+void Small8kPeriod(int32_t size_text, int *text, int32_t size_pattern,
 					int *pattern, int k_nb_letters, int error_k, int approx_period,
 					int32_t size_res, int *res, int *nb_updates) {
 
