@@ -157,11 +157,17 @@ Finally, the section \ref{Res} present our tests and results.
 \section{Algorithms}
 \label{Algo}
 
+\textcolor{red}{BAD!!}
+
 The algorithms use between $1$ and $3$ of the following methods: the FFT, Kangaroo or RLE methods.
 All algorithms except the k-mismatching $1$ use the FFT method,
 all k-mismatching use the Kangaroo method
 and the k-mismatching $3$ uses the RLE method.
 Those relations are summarized in the figure \ref{AllAlgorithms}.
+
+\textcolor{red}{$\Sigma$ is the text and pattern alphabet}
+
+\textcolor{red}{division en blocs de taille $2m$ partout}
 
 
 \begin{figure}[h]\centering
@@ -180,21 +186,26 @@ We will present the three methods, and the algorithms.
 
 \subsection{FFT method}
 
-The fast Fourier transform (FFT) can be used to have the result of the multiplication of two vectors.
-To do so, we compute the FFT of both vectors,
-add the FFT,
-then compute the inverse FFT of the result.
+The fast Fourier transform (FFT) can be used for vectors multiplication
+as computing the addition of two FFT give the same result faster.
+Stringology uses the FFT for alignement calculation
+using bit vectors to represent the presence of absence of a given letter for every position.
 
-This multplication is helpfull in pattern matching algorithm,
-see Algorithm \ref{MethodFFT}.
-We compute two bit vectors matching the text and pattern
+The FFT method on a letter $\alpha$ runs as follow:
+we compute two bit vectors matching the text and pattern
 such that a $1$-bit appears when the letter $\alpha$ does,
-do the FFT multiplication for the text and the inverse pattern,
-the result shows the number of matching $\alpha$ at every alignment.
+we compute the FFT of both vectors
+we add the text's FFT and the inverse pattern's FFT
+and compute the inverse FFT of the result.
+See Algorithm \ref{MethodFFT}.
 
-This method runs in $O(n \log n)$ times (for one letter).
+The result shows the number of matching $\alpha$ at every alignment.
+In pattern matching algorithm, this method can be used with every different letter
+to compute the Hamming distance between two texts.
 
-\textcolor{red}{division en blocs de taille $2m$ partout}
+This method runs in $O(n \log n)$ times for one letter.
+
+
 
 \begin{algorithm}
 \caption{$HD\_FFT(T, P, \alpha)$: }
@@ -234,10 +245,11 @@ This method runs in $O(n \log n)$ times (for one letter).
 \subsection{Exact Hamming distance}
 \label{eHD}
 
-cite \cite{ExactHD}
-
-The FFT method can be used for every unique letter of the pattern, and adding the temporary results.
-Then for each position, we deduct this result from the pattern size to have the Hamming distance.
+Abrahamson \cite{ExactHD} designed the first pattern matching algorithm using FFTs.
+The FFT method is used for every unique letter of the pattern, while adding the temporary results.
+We have the number of matching letters for each alignment.
+We can calculate the Hamming distance between the text and the pattern 
+by reducing each position's result from the pattern size.
 This algorithm runs in $O(n|\Sigma| m \log n)$ times
 (in $O(n|\Sigma| m \log m)$ if we divide the text in blocs of size $2m$).
 
@@ -248,43 +260,43 @@ The FFT method is used on the frequent letters.
 We initialize a vector $A$, and do a single read of the text:
 if we read an infrequent letter $\alpha$ at position $i$, we increment $A[i-k]$,
 where $k$ is every occurrence of $\alpha$ in the pattern.
-See algorithm \ref{ExHD}.
+% See algorithm \ref{ExHD}.
 This algorithm runs in $O(n \sqrt{m} \log m)$ times.
 
 
-\textcolor{red}{Q: Do we write every algorithm this way: pseudo-code and explanation?}
+% \textcolor{red}{Q: Do we write every algorithm this way: pseudo-code and explanation?}
 
 
-\begin{algorithm}
-\label{ExHD}
-\caption{$ExHD(T, P)$: Compute the exact Hamming distance between $T$ and $P$}
-\begin{algorithmic}
-\REQUIRE {$T$ of size $n$, $P$ of size $m$, $\Sigma$}
-\STATE init $Res[n-m+1]$, $cpt[\Sigma]$
-\STATE $\ell = sqrt(m \log n)$
-\STATE $CountLetters(P, \ell)$ \COMMENT {$O(m)$}
-\FOR {every $\alpha$ in $\Sigma$}
-	\IF {$isFrequent(\alpha)$}
-		\STATE $Tmp = HD\_FFT(T, P, \alpha)$
-		\FOR {$i$ in $[0, n-m+1]$}
-			\STATE $Res[i] += Tmp[i]$
-		\ENDFOR
-		\ENDIF
-\ENDFOR
-\FOR {$i$ in $[0, n]$}
-	\IF {$isInfrequent(T[i])$}
-		\FOR {all $P[k] == T[i]$}
-			\STATE $Res[i - k]++$ \COMMENT {positions $k$ are precomputed during $CountLetters$}
-		\ENDFOR
-	\ENDIF
-\ENDFOR
-\FOR {$i$ in $[0 ,n]$}
-	\STATE $Res[i] = m - Res[i]$
-\ENDFOR
-\RETURN $Res$
+% \begin{algorithm}
+% \label{ExHD}
+% \caption{$ExHD(T, P)$: Compute the exact Hamming distance between $T$ and $P$}
+% \begin{algorithmic}
+% \REQUIRE {$T$ of size $n$, $P$ of size $m$, $\Sigma$}
+% \STATE init $Res[n-m+1]$, $cpt[\Sigma]$
+% \STATE $\ell = sqrt(m \log n)$
+% \STATE $CountLetters(P, \ell)$ \COMMENT {$O(m)$}
+% \FOR {every $\alpha$ in $\Sigma$}
+% 	\IF {$isFrequent(\alpha)$}
+% 		\STATE $Tmp = HD\_FFT(T, P, \alpha)$
+% 		\FOR {$i$ in $[0, n-m+1]$}
+% 			\STATE $Res[i] += Tmp[i]$
+% 		\ENDFOR
+% 		\ENDIF
+% \ENDFOR
+% \FOR {$i$ in $[0, n]$}
+% 	\IF {$isInfrequent(T[i])$}
+% 		\FOR {all $P[k] == T[i]$}
+% 			\STATE $Res[i - k]++$ \COMMENT {positions $k$ are precomputed during $CountLetters$}
+% 		\ENDFOR
+% 	\ENDIF
+% \ENDFOR
+% \FOR {$i$ in $[0 ,n]$}
+% 	\STATE $Res[i] = m - Res[i]$
+% \ENDFOR
+% \RETURN $Res$
 
-\end{algorithmic}
-\end{algorithm}
+% \end{algorithmic}
+% \end{algorithm}
 
 
 
@@ -292,7 +304,7 @@ This algorithm runs in $O(n \sqrt{m} \log m)$ times.
 \subsection{Approximate Hamming distance}
 
 Kopelowitz and Porat \cite{ApproxHD} proposed an algorithm to approximate the Hamming distance
-using the exact Hamming distance algorithm, see section \ref{eHD}.
+using the exact Hamming distance algorithm (see section \ref{eHD}).
 For a $1 \pm \epsilon$ approximation,
 the algorithm runs $c+\log m$ iterations of the following loop:
 \begin{itemize}
@@ -303,29 +315,29 @@ the algorithm runs $c+\log m$ iterations of the following loop:
 \end{itemize}
 
 This algorithms runs in $O(n / \epsilon \log n \log m)$ times.
-See algorithm \ref{AppHD}.
+% See algorithm \ref{AppHD}.
 
 
-\begin{algorithm}
-\label{AppHD}
-\caption{$AppHD(T, P, \epsilon)$: Compute an $(1 \pm \epsilon)$ approximate Hamming distance between $T$ and $P$}
-\begin{algorithmic}
+% \begin{algorithm}
+% \label{AppHD}
+% \caption{$AppHD(T, P, \epsilon)$: Compute an $(1 \pm \epsilon)$ approximate Hamming distance between $T$ and $P$}
+% \begin{algorithmic}
 
-\REQUIRE {$T$ of size $n$, $P$ of size $m$, $\Sigma$, $\epsilon$}
-\STATE init Res
-\FOR {$i$ in $0, c * \log m]$}
-	\STATE $Map = RandomMapping(\Sigma, 2 / \epsilon)$
-	\STATE $Tmp = ExHD(Map(T), Map(P))$
-	\FOR {$j$ in $[0, n-m+1]$}
-		\IF {$Tmp[j]>Res[j]$}
-			\STATE $Res[j]=Tmp[j]$
-		\ENDIF
-	\ENDFOR
-\ENDFOR
-\RETURN Res
+% \REQUIRE {$T$ of size $n$, $P$ of size $m$, $\Sigma$, $\epsilon$}
+% \STATE init Res
+% \FOR {$i$ in $0, c * \log m]$}
+% 	\STATE $Map = RandomMapping(\Sigma, 2 / \epsilon)$
+% 	\STATE $Tmp = ExHD(Map(T), Map(P))$
+% 	\FOR {$j$ in $[0, n-m+1]$}
+% 		\IF {$Tmp[j]>Res[j]$}
+% 			\STATE $Res[j]=Tmp[j]$
+% 		\ENDIF
+% 	\ENDFOR
+% \ENDFOR
+% \RETURN Res
 
-\end{algorithmic}
-\end{algorithm}
+% \end{algorithmic}
+% \end{algorithm}
 
 
 
@@ -354,22 +366,22 @@ This algorithms runs in $O(n \log m)$ times. See algorithm \ref{WC}.
 
 
 
-\begin{algorithm}
-\label{WC}
-\caption{$WC(T, P)$: Find where $P$ matches in $P$}
-\begin{algorithmic}
+% \begin{algorithm}
+% \label{WC}
+% \caption{$WC(T, P)$: Find where $P$ matches in $P$}
+% \begin{algorithmic}
 
-\REQUIRE {$T$ of size $n$, $P$ of size $m$}
-\STATE Compute $FFT_T$ and $FFT_P$
-\STATE Compute $FFT^2_T$, $FFT^3_T$, $FFT^2_P$ and $FFT^3_P$ \COMMENT {in $O(n)$ and $O(m)$}
-\STATE $a = FFT_T+ FFT^3_P$
-\STATE $b = FFT^2_T+ FFT^2_P$
-\STATE $c = FFT^3_T+ FFT_P$
-\STATE $Res = InvFFT(a) - 2*InvFFT(b) + InvFFT(c)$
-\RETURN $Res$
+% \REQUIRE {$T$ of size $n$, $P$ of size $m$}
+% \STATE Compute $FFT_T$ and $FFT_P$
+% \STATE Compute $FFT^2_T$, $FFT^3_T$, $FFT^2_P$ and $FFT^3_P$ \COMMENT {in $O(n)$ and $O(m)$}
+% \STATE $a = FFT_T+ FFT^3_P$
+% \STATE $b = FFT^2_T+ FFT^2_P$
+% \STATE $c = FFT^3_T+ FFT_P$
+% \STATE $Res = InvFFT(a) - 2*InvFFT(b) + InvFFT(c)$
+% \RETURN $Res$
 
-\end{algorithmic}
-\end{algorithm}
+% \end{algorithmic}
+% \end{algorithm}
 
 
 \subsection{Kangaroo method}
@@ -392,6 +404,8 @@ We have the Hamming distance if we look for the LCP until we reach the end of th
 \textcolor{red}{I put the kangaroo and RLE methods here so they are close to the algorithms using them.}
 
 
+\textcolor{red}{do the algorithm !!}
+
 \subsection{K-mismatching 1}
 
 This algorithm\cite{Kangaroo} uses the Kangaroo method:
@@ -401,30 +415,30 @@ This algorithm runs in $O(kn)$ times, see algorithm \ref{K1}.
 
 
 
-\begin{algorithm}
-\label{K1}
-\caption{$K\_mism\_1(T, P, k)$}
-\begin{algorithmic}
+% \begin{algorithm}
+% \label{K1}
+% \caption{$K\_mism\_1(T, P, k)$}
+% \begin{algorithmic}
 
-\REQUIRE {$T$ of size $n$, $P$ of size $m$, $k$}
-\STATE init $Res[n-m+1]$
-\STATE init $Struct\_LCP$
-\FOR {$i$ in $[0, n-m+1]$}
-	\STATE $pos_T = i$
-	\STATE $pos_P = 0$
-	\STATE $e=0$
-	\WHILE {$e <=k$ OR $pos_P < m$}
-		\STATE $p = FindLCP(pos_T, pos_P)$
-		\STATE $pos_T += p + 1$
-		\STATE $pos_P += p +1$
-		\STATE $e++$
-		\ENDWHILE
-	\STATE $Res[i] = e$
-\ENDFOR
-\RETURN $Res$
+% \REQUIRE {$T$ of size $n$, $P$ of size $m$, $k$}
+% \STATE init $Res[n-m+1]$
+% \STATE init $Struct\_LCP$
+% \FOR {$i$ in $[0, n-m+1]$}
+% 	\STATE $pos_T = i$
+% 	\STATE $pos_P = 0$
+% 	\STATE $e=0$
+% 	\WHILE {$e <=k$ OR $pos_P < m$}
+% 		\STATE $p = FindLCP(pos_T, pos_P)$
+% 		\STATE $pos_T += p + 1$
+% 		\STATE $pos_P += p +1$
+% 		\STATE $e++$
+% 		\ENDWHILE
+% 	\STATE $Res[i] = e$
+% \ENDFOR
+% \RETURN $Res$
 
-\end{algorithmic}
-\end{algorithm}
+% \end{algorithmic}
+% \end{algorithm}
 
 
 \subsection{K-mismatching 2}
@@ -629,10 +643,15 @@ Those tests were made in a computer Intel® Core™ i7-6700 CPU @ $3.40$GHz.
 Each algorithm was compared with at least a naive algorithm.
 
 
+- Most of the algorithms use a threshold to use a method or another. We will test all of this threshold.
+
+- We will test te execution time on real DNA and English text for every algorithms.
+
+- Comparison beween two algorithm doesn't include the writing time.
 
 
 
-\subsection{exact matching using Wildcard}
+\subsection{Exact matching using Wildcard}
 \label{WCTests}
 
 We want to know how to use the FFT method:
@@ -690,7 +709,7 @@ Our tests showed that the Wildcard algorithm is always faster than the naive alg
 
 
 
-\subsection{exact Hamming distance}
+\subsection{Exact Hamming distance}
 
 
 For a $8$ millions letters text and a $20$ thousands letters pattern, 
@@ -797,7 +816,7 @@ The threshold may be badly chosen and could be updated by considering the real F
 
 
 
-\subsubsection*{Which pattern should we use while using real DNA or English texts?}
+\subsubsection*{Which threshold should we use while using real DNA or English texts?}
 
 To find the best threshold to use,
 we selected an English text of $8$ million letters
@@ -1093,7 +1112,8 @@ the k-mismatching algorithm, the naive algorithm and the optimized exact Hamming
 Each point represents the average time of $20$ runs.
 
 \begin{figure}[h]
-\includegraphics[scale=0.6]{./figures/Kang.png}
+\centering
+\includegraphics[scale=0.55]{./figures/Kang.png}
 \caption{
 Execution time of the k-mismatching algorithm $1$, exact Hamming distance algorithm and naive algorithm
 when $k$ vary.
@@ -1201,7 +1221,7 @@ We used the Approximate string matching algorithms instead of Karloff's algorith
 
 \subsubsection*{Execution time}
 
-We tested this algorithm on English and DNA sequences of $100 000$ letters with a $10 000$ letters pattern.
+We tested this algorithm on English and DNA sequences of $100$ thousands letters with a $10 000$ letters pattern.
 % We used our optimisations.
 
 On the DNA text, and $k = 10$, the algorithm uses the LCP method and runs in $7.8$ seconds.
@@ -1210,88 +1230,122 @@ On the English text and $k = 10$, the algorithm uses the LCP method and runs in 
 On the English text and $k = 50$, the algorithm uses the RLE method and runs in $4.6$ second.
 
 The main difference between the execution time of the runs using the RLE method %(runs $2$ and $4$)
-comes from the number of different letters in the text.
+comes from the number of infrequent letters in the text, thus the number of second derivative's updates.
 In the DNA text, the $4$ letters are frequents so $4$ FFT are used,
 with no additional second derivative updates.
-In the English text, $6$ to $7$ letters are frequents, and we have a least $900 000$ second derivative updates.
+In the English text, $6$ to $7$ letters are frequents, and we have a least $900$ thousands second derivative updates.
 
 
 
 \subsubsection*{Threshold between the RLE and FFT methods}
 
-First, we tested the $8k$-period part to find the best threshold
-used to sort the characters as frequent or infrequent.
-$t$ is a threshold on the number of run a character is present in.
+The $8k$-period section of the algorithm sorts the patterns letters as frequents or infrequents
+based on the number of run a character is present in. 
+The algorithms uses the FFT method on frequent letters
+and the RLE method on infrequent letters.
+We want to find an estimation of this threshold $t$, undefined in the paper.
 
-The execution time depends on the number of pair of run text/pattern.
-We increase the number of pair of runs and compare it to a FFT execution.
-See the table \ref{OptiComp}.
+% The algorithm uses a threshold $t$ to sort the letters as frequent in infrequent,
+
+
+% First, we tested the $8k$-period part to find the best threshold
+% used to sort the characters as frequent or infrequent.
+% $t$ is a threshold on the number of run a character is present in.
+
+The RLE method's execution time depends on the number of pair of text/pattern run.
+The FFT method's execution time depends on the number of frequent letters.
+
+We ran the RLE section while increase the number of pair of runs and compare it
+to the FFT execution of different sizes.
+The execution time of the FFT section includes the production of $T^*$ and $P^*$ strings
+and the FFT method for one letter.
+Tests show that if a second letter is computed, the execution time is close to twice the time for one letter
+(results not shown).
+% We used pre-computed patient plans. 
+See figure \ref{OptiComp}.
 
 \begin{figure}[h]
-\includegraphics[scale=0.45]{./figures/OptiComparOptiNaivHD.png}
-\caption{XXXX}
+\centering
+\includegraphics[scale=0.7]{./figures/OptiComparOptiNaivHD.png}
+\caption{Execution time of the RLE method (yellow) while we increase the number of pair of text/pattern runs.
+Times are compared to the execution time of the FFT method for $1$ FFT of $100$ thousands,
+$1$ million and $2$ millions letters.}
 \label{OptiComp}
 \end{figure}
 
-The execution time of the part using the FFT includes the production of $T^*$ and $P^*$ strings
-and the FFT method for one letter.
-If a second letter is computed, the execution time is close to twice the time for one letter.
-We used pre-computed patient plans. 
-
-The execution time of the part using the RLE runs grows linearly with the number of pairs of runs.
+The FFT methods execution time stays constant while the number of pair of runs increase. 
+The execution time of the RLE method grows linearly with the number of pairs of runs.
 This curve and the FFT for $2$ millions letters cross at $55$ millions of pair of RLE runs.   
 
 For an execution of the k-mismatching for a $1$ million letters pattern,
 the threshold between frequent and infrequent letters is $55$ millions pairs of RLE runs
-(as we will use FFT on $2$ millions letters).
+(we use a $2$ millions letters FFT for $1$ millions letters text).
 
 
 
-\subsubsection{K-mismatching $3$ vs. exact Hamming Distance: increase the number of pair of runs}
+\subsubsection*{Comparison: K-mismatching $3$ and exact Hamming Distance algorithms while we increase the number of pair of runs}
 
-We created texts of $100$ differents letters such that we can control the number of pair of runs
+We want to compare the execution time of the k-mismatching $3$ algorithm to the exact Hamming distance algorithm.
+\textcolor{red}{why???}
+We created texts of $100$ differents letters and control the number of pair of runs
 between the text and pattern.
 
-On a $1$ million letters text, a $100$ thousand letters pattern and $k = 100$,
-the execution time of the exact Hamming distance and the k-mismatching are gathered in the figure \ref{Opti01FFT}.
+The algorithms ran on a $1$ million letters text, a $100$ thousand letters pattern and $k = 100$.
+In the patterns, all letters appeared with the same frequency,
+but we forced the utilisation of $0$ and $1$ FFT in both algorithm.
+The execution time of the exact Hamming distance and the k-mismatching are represented in the figure \ref{Opti01FFT}.
 
 
 \begin{figure}[h]
+\centering
 \includegraphics[scale=0.45]{./figures/Opti01FFT.png}
-\caption{XXXX}
+\caption{Comparison of k-mismatching $3$ and the exact Hamming distance execution times.
+Text of $1$ million letters and pattern of $100$ thousand letters with $100$ differents letters.
+We forced the utilisation of $0$ and $1$ FFT.}
 \label{Opti01FFT}
 \end{figure}
 
-In the patterns, all letters appeared with the same frequency,
-but we forced the utilisation of $0$ and $1$ FFT in both algorithm.
-In both cases, the execution time of the algorithms are similar around $300$ millions pairs of runs:
+For the runs with $0$ or $1$ FFT,
+the execution time of the algorithms are similar around $300$ millions pairs of runs:
 the k-mismatching is faster under $300$ millions pair of runs.
-The same kind of curves were find for $5$ FFT and $15$ FFT, they also intersect around $k=300$ millions.
+The same kind of curves were found for up to $20$ FFT, they also intersect around $300$ millions of runs
+(results not shown).
+
+For a $1$ millions letters text, a $100$ thousands letters pattern
+and $k$ big enough so the k-mismatching algorithm uses the FFT+RLE method,
+the $k$-mismatching algorithm runs faster when we have less than $300$ millions of pair of runs,
+for any frequent letters.
 
 
 
-\subsubsection{K-mismatching $3$ vs. exact Hamming Distance: real files}
+\subsubsection*{Comparison of the k-mismatching $3$ and exact Hamming Distance algorithms on real files}
 
-On a $1$ million letters text and a $100$ thousands letters pattern.
+We ran the al-mismatching $3$ algorithm
+on a $1$ million letters text and a $100$ thousands letters pattern.
+We compare it to the exact Hamming distance algorithm execution time.
 
 On DNA files, the exact Hamming distance algorithm runs in $0.44$ second.
-The k-mismatching use the LCP method until around $k=6500$,
-the LCP construction only alone needs several seconds.
+The k-mismatching use the LCP method until $k \approx 6500$,
+the LCP construction alone needs several seconds.
 When $k>6500$, the RLE method is used, the algorithm runs in $1.67$ second.
 As all letters are frequent, both algorithms use $4$ FFT.
 The additional computation time of the k-mismatching  comes from the period pattern calculation,
 the computation of $T^*$, $P^*$ and so on.
 
 On English text, the exact Hamming distance algorithm runs in $1.5$ second.
-The k-mismatching use the LCP method until around $k=20000$,
+The k-mismatching use the LCP method until $k \approx 20000$,
 the LCP construction alone needs several dozens of seconds.
 When $k>20000$, the RLE method is used, the algorithm runs in $7.5$ second.
 $18$ letters are frequent, but text and pattern aren't periodical enough to profit from the RLE method.
 
+On real DNA and English files,
+we recommend to use the exact Hamming distance algorithm rather than the k-mismatching $3$ algorithm.
 
 
-\subsubsection{Algorithm utilisation}
-The exact Hamming Distance algorithm is always faster that the k-mismatching algorithm for short alphabet (DNA).
+\subsubsection*{Algorithm utilisation}
+
+\textcolor{red}{rewrite!}
+The exact Hamming Distance algorithm is always faster that the k-mismatching algorithm for short alphabet, as DNA.
 
 Text and pattern should have a good periodicity, otherwise, the LCP method is too slow.
 
@@ -1305,17 +1359,34 @@ Note that we didn't used the fastest LCP construction method.
 
 
 \section*{Conclusion}
-resume of results
 
-stringipedia
+We implemented and compared $6$ algorithms solving several pattern matching problems: 
+exact matching, exact matching with wildcards, approximate matching and k-mismatching.
+% Using the FFTW3 library 
+% use saved plan
+We changed all thresholds to optimise the algorithms execution time.
+
+For the exact matching with wildcards, Clifford and Clifford's \cite{WC} algorithm is faster than the naive algorithm.
+But for every other problems, Abrahamson's algorithm \cite{ExactHD} is a good algorithm to use
+in most situations.
 
 
-ouverture et travail futur : we would like to implement Clifford's algorithm
-
-								find/do better LCP structures implementation 
+% HD algorithm is good to solve the exact matching problem for small alphabet or long pattern.
 
 
+% the exact algorithm is better than the approximate algorithm  
 
+
+
+
+
+All algorithms, their implementation and results can be found on our website \cite{stringipedia}.
+
+
+We hope to include the k-mismatching algorithm from Clifford et al. \cite{Undone} in future work.
+This algorithm uses the RLE method.
+We also would like to implement the LCP structure in $O(1)$,
+and update our results.
 
 
 \section*{Bibliography}
