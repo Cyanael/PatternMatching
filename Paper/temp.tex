@@ -349,8 +349,12 @@ exact matching with wildcards.
 Here, every letter is replaced by a number, with $0$ beeing a wildcard.
 
 The idea is to compute the sum of squared differences between the text and pattern
-(\textcolor{red}{and multiply by the XXX} ) at every alignment.
-We use the pattern and text's FFTs, and theirs squared and cubed FFTs:
+at every alignment.
+The wildcard are taken into account by multiplying the difference by the pattern and text letters.
+In other words, the algorithm computes $T[i] \times P[i+j] \times (T[i] - P[i+j])^2$
+for every position $j$ of every alignment $i$.
+
+The algorithm uses the pattern and text's FFTs, and theirs squared and cubed FFTs:
 $FFT^2_P$ is the pattern's FFT where all its coefficient are the cubed coefficient of $FFT_P$.
 The algorithm computes: 
 \begin{itemize}
@@ -358,11 +362,12 @@ The algorithm computes:
 \item $a = FFT_T+ FFT^3_P$
 \item $b = FFT^2_T+ FFT^2_P$
 \item $c = FFT^3_T+ FFT_P$.
-\item $Res = InvFFT(a) - 2*InvFFT(b) + InvFFT(c)$
+\item $Res = InvFFT(a) - 2 \times InvFFT(b) + InvFFT(c)$
 \end{itemize}
 
 Every position $i$ where $Res[i] = 0$ is an exact matching.
-This algorithms runs in $O(n \log m)$ times. See algorithm \ref{WC}.
+This algorithms runs in $O(n \log m)$ times.
+% See algorithm \ref{WC}.
 
 
 
@@ -386,32 +391,62 @@ This algorithms runs in $O(n \log m)$ times. See algorithm \ref{WC}.
 
 \subsection{Kangaroo method}
 
-The Kangaroo method uses the longest common prefix (LCP) between two words.
-It needs a structure which returns the LCP between any suffix of the text and any suffix of the pattern
-in $O(1)$ times.
+The Kangaroo method \textcolor{red}{who do we cite ??}
+computes the Hamming distance between two words, up to $k$.
+It uses the longest common prefix (LCP) between two words.
 
-cite qui ????
 
-For every position $i$ in $T$, the Kangaroo method finds the LCP between $T$ and $P$
-starting at $T[i]$ and $P[0]$.
+
+Here we designed the Kangaroo method to finds the LCP between an alignment of $T$ and $P$
+(starting at $T[i]$ and $P[0]$).
 Let says this LCP is of length $p$, we have $T[i+p] \neq P[p]$.
 Then the method looks for the following LCP starting at position $T[i+p+1]$ and $P[p+1]$.
-We have the Hamming distance if we look for the LCP until we reach the end of the pattern.
-% This method runs in $O(nm)$ times.
+See algorithm \ref{AlgoKang}.
+The result is the Hamming distance if we look for the LCP until we reach the end of the pattern,
+but it is $k$ if we don't.
 
-\textcolor{red}{vérifier que se soit bien ça !!}
+It needs a structure which returns the LCP between any suffix of the text and any suffix of the pattern
+in $O(1)$ times.
+This method runs in $O(k)$ times.
 
-\textcolor{red}{I put the kangaroo and RLE methods here so they are close to the algorithms using them.}
+% \textcolor{red}{I put the kangaroo and RLE methods here so they are close to the algorithms using them.}
 
 
-\textcolor{red}{do the algorithm !!}
+
+\begin{algorithm}
+\caption{$Kangaroo(T, P, i, k)$}
+\label{AlgoKang}
+\begin{algorithmic}
+
+\REQUIRE {$T$ of size $n$, $P$ of size $m$, position $i$ of the alignment, number of errors allowed $k$}
+\STATE init struct\_LCP
+\STATE $nb\_err = 0$, $pos_P = 0$, $pos_T = i$
+\WHILE {$nb\_err <=k$ OR $pos_P < m$}
+		\STATE $p = FindLCP(pos_T, pos_P)$
+		\COMMENT {returns the size of the LCP}
+		\STATE $pos_T += p + 1$
+		\STATE $pos_P += p +1$
+		\STATE $nb\_err++$
+		\ENDWHILE
+\RETURN $nb\_err$
+
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
 
 \subsection{K-mismatching 1}
 
-This algorithm\cite{Kangaroo} uses the Kangaroo method:
+This first k-mismatching algorithm, proposed by Landau and Vishkin\cite{Kangaroo}
+uses the Kangaroo method for every alignment:
 for every position in $T$, it looks for the LCP up to $k$ times or until we reach the end of the pattern.
 
-This algorithm runs in $O(kn)$ times, see algorithm \ref{K1}.
+This algorithm runs in $O(kn)$ times.
+% See algorithm \ref{K1}.
 
 
 
@@ -451,12 +486,12 @@ If there is less than $2\sqrt{k}$ frequent letters:
 we use the FFT method with all the frequent letters and count the matching on infrequent letters directly.
 
 If there is more than $2\sqrt{k}$ frequent letters:
-We select $\sqrt{k}$ occurrences of $2\sqrt{k}$ frequent letters,
+we select $\sqrt{k}$ occurrences of $2\sqrt{k}$ frequent letters,
 theirs positions gathered in a list $J$.
 We initialise a vector $d$.
-Then, for each position $i$ in $t$ and $j$ in $J$, such than $T[i] = P[j]$,
+Then, for each position $i$ in $T$ and every value $j$ in $J$ such than $T[i] = P[j]$,
 we increase $d[i-j]$.
-For each position $i$ such that $d[i]>k$, we use the Kangaroo method.
+Then, for each position $i$ such that $d[i]>k$, we use the Kangaroo method.
 
 This algorithm runs in $O(n\sqrt{k} \log k)$ times.
 
@@ -510,23 +545,26 @@ This algorithm runs in $O(n\sqrt{k} \log k)$ times.
 
 \subsection{RLE method}
 
-Let $T_{RLE}$ and $P_{RLE}$ be the run length encoding of $T$ and $P$.
+The RLE method computes the Hamming distance between two words
+by processing caracter repetitions (run) instead of single letters.  
+Let $RLE_T$ and $RLE_P$ be the run length encoding of $T$ and $P$.
 This method uses every pair of text-pattern runs of the same letter
 to update the second derivative of the Hamming distance,
 see Algorithm \ref{RLEmet}.
 
-The methods runs in \textcolor{red}{???XXX} times.
+The methods runs in $O(r_T \times r_P)$ times,
+where $r_T$ is the number of runs of T and $r_T$ is the number of runs of T.
 
 
 \begin{algorithm}
 \label{RLEmet}
-\caption{$K\_mism\_1(T, P, k)$}
+\caption{$RLE(RLE_T, RLE_P)$}
 \begin{algorithmic}
 
-\REQUIRE {$T$ of size $n$, $P$ of size $m$, $k$}
+\REQUIRE {$T$ of size $n$, $P$ of size $m$}
 \STATE init $A[n-m+1]$
-\FOR {every run $r$ in $T_{RLE}$}
-	\FOR {every run $s$ in $P_{RLE}$}
+\FOR {every run $r$ in $RLE_T$}
+	\FOR {every run $s$ in $RLE_P$}
 		\IF {$r.letter == s.letter$}
 			\STATE $A[r.begin - s.end] ++$
 			\STATE $A[r.end-s.end+1] --$
@@ -558,36 +596,44 @@ First, run a $(1 \pm \epsilon)$ approximate algorithm on the pattern against its
 to find a $O(k)$-period of the pattern.
 
 If there is no $4k$-period smaller than $k$,
-we run the $(1 \pm \epsilon)$ approximate algorithm on the pattern against the text
-wz save the positions where the algorithm reports at most $k$ mismatches,
+we run the $(1 \pm \epsilon)$ approximate algorithm on the pattern against the text,
+we save the positions where the algorithm reports at most $k$ mismatches,
 and we use the LCP method on this positions. 
 
-If there is, we have $l$, the minimal $8k$-period of $P$.
-we compute $P^*$ and $T^*$, the run length encoding of the reorganisation of $P$ and $T$ using $l$
+If there is: we have $l$, the minimal $8k$-period of $P$.
+We compute $P^*$ and $T^*$, the run length encoding of the reorganisation of $P$ and $T$ using $l$
 (see \cite{Kmism3} for further explanations).
 We sort the characters of $P^*$ as frequent or infrequent characters,
-where $\alpha$ is a frequent character if it appears in more than $t$ runs
-($t$ is undetermined in the paper).
+where a frequent character appears in more than $t$ runs.
+% ($t$ is undetermined in the paper).
 We use a FFT for every frequent character,
 and use the RLE method on infrequent characters.
 
 This algorithm runs in $O(m \log^2 m \log |\Sigma| +k \sqrt{m \log m} * n/m)$ times.
 
 
-\textcolor{red}{no algorithm here!}
+
+
+
+
+
+
+
 
 \section{Method}
 \label{Method}
+
+\subsection*{Implementation}
 
 All the algorithms were implemented in C++.
 
 We compared $8$ methods from $3$ libraries to find how to do the fastest FFT multiplication:
 AlgLib (free edition) \cite{alglib}, FFTW3 \cite{FFTW05} and Flint \cite{Hart2010}.
-The AlgLib and FFTW3 libraries compute the FFT for two vectors,
-adds the results and computes the inverse FFT of the result.
-The Flint library computes a polynomial multiplication.
-We tested the execution time of every method on vectors of $1$ million random integers.
+The Flint library computes a polynomial multiplication while
+the AlgLib and FFTW3 libraries use the FFT method. %for two vectors,
+%adds the results and computes the inverse FFT of the result.
 
+We tested the execution time of every method on vectors of $1$ million random integers.
 The table \ref{tempsFFT} presents the average time of 10 executions.
 
 
@@ -605,30 +651,32 @@ AlgLib 					& fftr1d 									& $0.51$ \\ \hline
 						& fq\_poly\_mul\_reorder 						& $1.17$ \\
 						& fq\_poly\_mul\_KS 							& $1.50$ \\ \hline
 \end{tabular}
-\caption{Execution time of \textcolor{red}{XXXX}}
+\caption{Execution time of polynomial multiplication of vectors of $1$ millions integers,
+using several methods from the Flint, AlgLib and FFTW3 libraries.
+}
 \end{table}
 
-We choose to use the FFTW3 library.
-FFTW3 uses a \textit{plan} which find the best method to compute the FFT of a given size.
+Dues to is fast execution times, we used the FFTW3 library.
+The FFT computation of FFTW3 uses a \textit{plan} which find the best method to compute the FFT of a given size.
 A plan can be precomputed, saved and reused later.
 Its documentation recommends to use FFT for vector which size is a power of $2$.
 We computed and saved all FFT plans from $1$ number to $16$ millions numbers for our futur uses.
-Except if specified, all runs used the patient flag.
+Except if specified, all tests use plan with the patient flag.
 
 
-\subsection{dataset}
+\subsection*{Dataset}
 
-The tests were made on real data:
+Most of the tests were made on real data:
 \begin{itemize}
-\setlength\itemsep{0.1em}
-\item a DNA file composed of the full genome e.coli (4.6 Mb)
+\setlength\itemsep{-0.4em}
+\item a DNA file composed of the full genome e.coli (4.6 Mb). A concatenation of this text with a copy of itself was made to increase its leangth.
 \item an English text composed of five books from the Sherlock Holmes serie from Sir Arthur Conan Doyles (8 Mb)
 \end{itemize}
-For the tests using this files, the text was a prefixe of the wanted size, 
-the pattern was extracted from the file at a random position. \textcolor{red}{XXbaaad!!XX}
+% For the tests using this files, the text was a prefixe of the wanted size, 
+% the pattern was extracted from the file at a random position. \textcolor{red}{XXbaaad!!XX}
 
-For some tests, we made artificial texts to force a characteristic.
-Each one will be described in the result section.
+% We made artificial texts to force a characteristic.
+% Each one will be described in the result section.
 
 
 
