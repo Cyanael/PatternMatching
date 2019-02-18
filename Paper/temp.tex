@@ -658,7 +658,11 @@ using several methods from the Flint, AlgLib and FFTW3 libraries.
 
 Dues to is fast execution times, we used the FFTW3 library.
 The FFT computation of FFTW3 uses a \textit{plan} which find the best method to compute the FFT of a given size.
+The number of inspected methods vary with the flag used.
+There are four flags, which sorted by number of tested methods in increasing order are:
+estimate, mesure, patient and exhaustive.
 A plan can be precomputed, saved and reused later.
+
 Its documentation recommends to use FFT for vector which size is a power of $2$.
 We computed and saved all FFT plans from $1$ number to $16$ millions numbers for our futur uses.
 Except if specified, all tests use plan with the patient flag.
@@ -684,19 +688,19 @@ Most of the tests were made on real data:
 \section{Results}
 \label{Res}
 
-Those tests were made in a computer Intel® Core™ i7-6700 CPU @ $3.40$GHz.
 
 \textcolor{red}{what do we tell here ?}
 
 Each algorithm was compared with at least a naive algorithm.
+Note that comparison beween two algorithm won't include the writing time.
 
 
 - Most of the algorithms use a threshold to use a method or another. We will test all of this threshold.
 
 - We will test te execution time on real DNA and English text for every algorithms.
 
-- Comparison beween two algorithm doesn't include the writing time.
 
+Tests were made on a computer Intel® Core™ i7-6700 CPU @ $3.40$GHz.
 
 
 \subsection{Exact matching using Wildcard}
@@ -708,10 +712,10 @@ How much time do we save by using the saved plan?
 
 This algorithm was tested on randomly generated files of numbers from $0$ to $10$.
 The text was composed of $8$ millions numbers and the pattern of $100$ thousand numbers.
-The naive algorithm runs in more than $10$ minutes.
+% The naive algorithm runs in more than $10$ minutes.
 
 The algorithm ran several times with several options:
-when the text is computed fully or divided in blocs of size $2m$
+when the text is computed as one bloc or divided in blocs of size $2m$
 and with or without charging the saved plan (with the patient flag).
 Note that is we don't use a saved plan, the algorithm creates a plan with the estimate flag.
 The table \ref{TableWC} shows the execution times with every option.
@@ -721,9 +725,10 @@ The table \ref{TableWC} shows the execution times with every option.
 \hline
 			& without saved plan & with saved plan \\ \hline
 full text	& $7.84$ s & $5.95$ s \\ \hline
-text divided in blocs of size $2m$ &  $5.83$ s & $5.59$ s \\ \hline
+\begin{tabular}{@{}c@{}}text divided in blocs \\ of size $2m$\end{tabular} &  $5.83$ s & $5.59$ s \\ \hline
 \end{tabular}
-\caption{Excecution times of the exact matching using wildcards algorithm with several options.}
+\caption{Excecution times of the exact matching using wildcards algorithm.
+Text of $8$ millions numbers, pattern of $100$ thousand numbers}
 \label{TableWC}
 \end{table}
 
@@ -736,13 +741,15 @@ This algorithm runs faster if the text is divided in smaller blocs
 and obviously if we use a plan already computed.
 
 In the other hand, if the patient plan wasn't precomputed,
-it is better to not force the algorithm to use a plan with a patient plan.
+it is better to not force the algorithm to use a plan with a patient flag.
+
 Moreover, it is often faster to compute a small plan with the exhaustive flag
 than a bigger one with the patient flag, making the execution even faster.
 In the example above, we could pre-compute the plan
 with the exhaustive flag for $200$ thousand letters faster than
 the plan with the patient flag for $8$ million letters ($3$ minutes to $90$ minutes).
-The algorithm execution time using the exhaustive flag on $200$ thousand letters is $5.39$ seconds.
+The algorithm runs in $5.39$ seconds while using the precomputed plan with exhaustive flag
+on $200$ thousand letters.
 
 \subsubsection*{Algorithm utilisation}
 
@@ -767,12 +774,10 @@ the algorithm runs in $4.1$ seconds on DNA sequences and in $5.7$ seconds on an 
 We want to test:
 \begin{itemize}
 \setlength\itemsep{-0.4em}
-\item how does the execution time vary with the pattern's form
-\item how good is the threshold
-\item what is the best threshold on real text
+\item How does the execution time vary with the pattern's form?
+\item How good is the threshold sorting the letters as frequent or infrequent?
+\item What is the best threshold on real text?
 \end{itemize}
-
-\textcolor{red}{Manque : quel temps d'execution après les modifications ??}
 
 
 
@@ -789,10 +794,10 @@ so %for several sizes of pattern,
 we made artificial patterns
 with a minimum or maximum number of infrequent letter,
 and inducing the computation of a defined number of FFT.
-Let $L$ be the threshold with $L = sqrt(m \log n)$.
+Let $L$ be the threshold with $L = \sqrt{m \log n}$.
 In a pattern with the minimum number of infrequent letters ($0$),
 all letters will appear more than $L$ times
-(we use $m/\sigma$ occurrences for each letters).
+(exactly $m/\sigma$ times).
 In a pattern with the maximum number of infrequent letters,
 we want to maximize the occurrences $k'$ of each infrequent letter
 while still having the number of frequent letter we want.
@@ -803,19 +808,19 @@ where $k$ in the number of occurrence of each frequent letter.
 % every infrequent letter appear $(m-k*X)/(\sigma -X)$,
 % such that $X$ is the number of frequent letters and $\sigma$ is the number of letters in the alphabet.
 
-We ran the algorithm in patterns of increasing size (up to $20 000$ letters) inducing $1$ to $4$ FFT,
-with a minimum and maximum number of frequent letters, with $\sigma = 4$ (as a DNA pattern)
-and $\sigma = 95$ (as an English pattern).
+We ran the algorithm on patterns of increasing size, up to $20 000$ letters, inducing $1$ to $4$ FFTs,
+with a minimum and maximum number of frequent letters, with $\sigma = 4$ (like a DNA pattern)
+and $\sigma = 95$ (like an English pattern).
 We also ran the algorithm when every letters of the pattern occur equally and $L=m$ such that no FFT is used.
 
-The figure \ref{ExHDADN} presents the computation times on a $8$ millions letters DNA text.
-The figure \ref{ExHDEnglish} presents the computation times on a $8$ millions English text.
-The following times include the computation time without the initialisation and the writing in the output.
+The figure \ref{ExHDADN} presents the computation times on a $8$ millions letters DNA text
+and the figure \ref{ExHDEnglish} the computation times on a $8$ millions English text.
+The following times include the computation time without the initialisation nor the writing time in the output.
 In this figures, a colored area indicates the expected execution time for a defined number of frequent letter.
 
 \begin{figure}[h]
 \includegraphics[scale=0.45]{./figures/ExHDADN.png}
-\caption{DNA text of $8$ millions letters and DNA pattern of $0$ to $20 000$ letters, .
+\caption{DNA text of $8$ millions letters and DNA pattern of $0$ to $20 000$ letters.
 Execution time for $0$ to $4$ frequent letters.}
 \label{ExHDADN}
 \end{figure}
@@ -829,8 +834,8 @@ Execution time for $0$ to $4$ frequent letters.}
 
 
 The algorithm always benefits of the use of at least one FFT when the pattern is longer than $1500$ letters.
-As there are only $4$ letters in a DNA pattern,
-the computation time doesn't change when the pattern length increase with $4$ frequent letters.
+As there are only $4$ different letters in a DNA pattern,
+the computation time doesn't change when the pattern length increase and $4$ letters are frequents.
 
 In a pattern matching on real DNA sequence, the $4$ letters appear with almost the same amount of occurrencies.
 In those cases,
@@ -839,7 +844,8 @@ for a $8$ millions letters text and every size of pattern.
 
 In a English text and pattern, it is more interesting to not use any FFT for a pattern smaller than $6000$ letters.
 
-The curve for the utilisation of $0$ FFT (in green) increases more slowly than the one in the DNA sequences.
+The curve for the utilisation of $0$ FFT (in green) increases more slowly in English text
+than in DNA text.
 This is due to the number of occurrences of each infrequent letters.
 Assume that every infrequent letter appear with the same amount of occurrences.
 In a English pattern, each $95$ letters appear $k'=m/95$ times,
@@ -871,11 +877,11 @@ we selected an English text of $8$ million letters
 and ran the algorithm several times
 with a $20 000$ letters pattern
 randomly extracted from the text at each run.
-We increased the threshold from $400$ to $2500$ letters occurrences.% with a 100 letters steps.
+We increased the threshold from $400$ to $2500$ occurrences.% with a 100 letters steps.
 
 The results are gathered in the figure \ref{ExHDThresh} where
 every point represents a run and its colour indicates the number of FFT used.
-The line is the average computation time of $10$ runs.
+The blue line is the average computation time of $10$ runs.
 It is used to find the best threshold:
 the one inducing the smaller computation time.
 
@@ -909,7 +915,7 @@ the flat section of the curve.
 
 We ran the previous program on the $8$ millions letters of English text and patterns of increasing size
 to estimate the optimal threshold depending on the pattern size.
-We computed the average computation time of $50$ runs for each pattern and threshold sizes.
+We computed the average computation time of $50$ runs for each pattern size and threshold.
 
 The figure \ref{ExHDThreshAll} shows the results on patterns of inscreasing size.
 The light blue curve was made by taking the flat section's left end, 
@@ -935,7 +941,8 @@ The dotted red line indicates the $\sqrt{m \log n}$ paper's threshold.}
 \end{figure}
 
 
-The threshold should be higher for every size of pattern.
+This test shows that the threshold should be higher for every size of pattern.
+\textcolor{red}{other thing to say ??}
 
 We found this kind of figure for every size of English text.
 
@@ -962,14 +969,14 @@ Select randomly a primary number $p$ greater than the alphabet size $\sigma$.
 Then select randomly two numbers $a$ and $b$ smaller than $p$.
 Every integer $i$ representing a letter is mapped to the number
 $a * i + b \equiv \pmod p \equiv \pmod \sigma$.
-We used the \textit{random()} function of \textit{stdlib.h}
+We used the \textit{random} function of the \textit{stdlib} library
 and generate a new seed for every mapping.
-We saved the $1200$ first prime numbers in a file, loaded at the beginning of the program.
+We saved the $1200$ first prime numbers in a file and load them at the beginning of the program.
 
 
 We use our optimised version of the exact Hamming distance algorithm
 running in $O(n \sqrt{m \log n})$ times
-rather than the algorithm $O(\sigma n \log n)$ one mentionned in the paper.
+rather than the algorithm running in $O(\sigma \times n \log n)$ times mentionned in the paper.
 The figure \ref{AppHDComp} shows how much time we save by using this algorithm
 when $\epsilon$ changes.
 
@@ -997,8 +1004,8 @@ In the figure, when we have $\epsilon > 0.3$,
 the optimum number of FFT is equal to the number of letter in the mapped text,
 inducing equal running times.
 
-We will use the $O(n \sqrt{m \log n})$ optimised version of the exact Hamming distance
-algorithm in the later tests.
+% We will use the $O(n \sqrt{m \log n})$ optimised version of the exact Hamming distance
+% algorithm in the later tests.
 % rather than the $O(|\Sigma| n \log n)$ one presented in the paper.
 
 
@@ -1012,8 +1019,8 @@ On a English text, it runs in around $45$ seconds.
 Those computations times are $10$ time slower than the exact Hamming distance algorithm,
 due to the $22$ loop iterations.
 
-We compared the approximate's results to the exact's results
-and found that this algorithm approximates the Hamming distance by $\epsilon = 0.13$.
+% We compared the approximate's results to the exact's results
+% and found that this algorithm approximates the Hamming distance by $\epsilon = 0.13$.
 
 
 \subsubsection*{What does $2/\epsilon$ means?}
@@ -1066,14 +1073,14 @@ we can reduce the number of iterations to come closer to the input error rate.
 Our tests shows that $5$ iterations are enought
 for those text and pattern sizes: the output error rate stays under $0.2$,
 with a maximum of $0.107$, %(for more than $500$ runs),
-while the running time decreases to $16.8$ seconds.
+while the running time decreases from $45$ to $16.8$ seconds.
 
  
 
 \subsubsection*{How does the error rate affect the algorithm computation time?}
 
 The algorithm ran while the pattern size and the error rate vary
-and we compare its execution time to the naive algorithm.
+and we compare its execution time to the naive algorithm's.
 % The pattern is a part of the text selected randomly.
 The algorithm uses $5$ iterations.
 The figure \ref{AppHDTempsErr} shows the computation time of the algorithm.
@@ -1088,7 +1095,7 @@ Comparison with the naive algorithm (blue line).}
 \end{figure}
 
 As expected, the smaller the value of $\epsilon$, the slower the execution time.
-The naive algorithm is faster for the pattern lenght under $2000$ letters.
+The naive algorithm is faster for pattern lenght under $2000$ letters.
 The curves for $\epsilon = 0.5 / 0.4 / 0.3$ are almost flat
 because the mapped text is composed of $4 / 5 / 6$ letters
 and the Hamming distance algorithm uses the same number of FFT.
@@ -1098,16 +1105,16 @@ and patterns of length up to $5500$ letters with $\epsilon = 0.1$.
 
 
 
-\subsubsection{Algorithm utilisation: Comparison with the exact Hamming distance algorithm}
+\subsubsection*{Algorithm utilisation: Comparison with the two exact Hamming distance algorithms}
 
 % When should we use the approximate algorithm instead of the exact Hamming distance?
 
 Let see the number of FFT computed in each algorithm:
-the Hamming distance uses $|\Sigma|$ FFT,
-while the approximate algorithm uses $c \log n 2/\epsilon$ FFT.
+the $O(|\Sigma| \sqrt{m \log n})$ exact Hamming distance uses $|\Sigma|$ FFTs,
+while the approximate algorithm uses $c \log n \times 2/\epsilon$ FFTs.
 To use the approximate algorithm, we need to have $c \log n 2/\epsilon > |\Sigma|$. 
 
-For our English text, we have $c 2/\epsilon * 22 > 95$.
+For our English text, we have $c \times 2/\epsilon * 22 > 95$.
 We can use the original number of loop iterations with $c = 1$,
 and be limited to $\epsilon > 0.46$,
 or reduce it (without consequence on the result, see section \ref{AppIter})
@@ -1117,7 +1124,7 @@ The $\epsilon$ limit changes if we have a bigger alphabet or a smaller text leng
 
 On the other hand and looking at our tests,
 it is always preferable to use the $O(n \sqrt{m \log n})$ exact Hamming distance algorithm
-instead of the approximate algorithm as the exact Hamming distance uses the optimum number the FFT at all times.
+instead of the approximate algorithm as the exact Hamming distance uses the optimum number the FFTs at all times.
 
 
 
