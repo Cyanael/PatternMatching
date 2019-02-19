@@ -250,8 +250,8 @@ The FFT method is used for every unique letter of the pattern, while adding the 
 We have the number of matching letters for each alignment.
 We can calculate the Hamming distance between the text and the pattern 
 by reducing each position's result from the pattern size.
-This algorithm runs in $O(n|\Sigma| m \log n)$ times
-(in $O(n|\Sigma| m \log m)$ if we divide the text in blocs of size $2m$).
+This algorithm runs in $O(n\sigma m \log n)$ times
+(in $O(n\sigma m \log m)$ if we divide the text in blocs of size $2m$).
 
 A way to optimize this algorithm is to put a threshold $\ell = \sqrt{m \log n}$
 to sort the pattern letters as frequent or infrequent,
@@ -598,7 +598,7 @@ to find a $O(k)$-period of the pattern.
 If there is no $4k$-period smaller than $k$,
 we run the $(1 \pm \epsilon)$ approximate algorithm on the pattern against the text,
 we save the positions where the algorithm reports at most $k$ mismatches,
-and we use the LCP method on this positions. 
+and we use the Kangaroo method on this positions. 
 
 If there is: we have $l$, the minimal $8k$-period of $P$.
 We compute $P^*$ and $T^*$, the run length encoding of the reorganisation of $P$ and $T$ using $l$
@@ -609,7 +609,7 @@ where a frequent character appears in more than $t$ runs.
 We use a FFT for every frequent character,
 and use the RLE method on infrequent characters.
 
-This algorithm runs in $O(m \log^2 m \log |\Sigma| +k \sqrt{m \log m} * n/m)$ times.
+This algorithm runs in $O(m \log^2 m \log \sigma +k \sqrt{m \log m} * n/m)$ times.
 
 
 
@@ -1110,11 +1110,11 @@ and patterns of length up to $5500$ letters with $\epsilon = 0.1$.
 % When should we use the approximate algorithm instead of the exact Hamming distance?
 
 Let see the number of FFT computed in each algorithm:
-the $O(|\Sigma| \sqrt{m \log n})$ exact Hamming distance uses $|\Sigma|$ FFTs,
+the $O(\sigma \times \sqrt{m \log n})$ exact Hamming distance uses $\sigma$ FFTs,
 while the approximate algorithm uses $c \log n \times 2/\epsilon$ FFTs.
-To use the approximate algorithm, we need to have $c \log n 2/\epsilon > |\Sigma|$. 
+To use the approximate algorithm, we need to have $c \log n \times 2/\epsilon > \sigma$. 
 
-For our English text, we have $c \times 2/\epsilon * 22 > 95$.
+For our English text, we have $c \times 2/\epsilon \times 22 > 95$.
 We can use the original number of loop iterations with $c = 1$,
 and be limited to $\epsilon > 0.46$,
 or reduce it (without consequence on the result, see section \ref{AppIter})
@@ -1136,16 +1136,13 @@ instead of the approximate algorithm as the exact Hamming distance uses the opti
 
 \subsubsection*{Implementation}
 
-\textcolor{red}{redo all here}
-
-We used the data structures (SA, LCP) implementations from the \textit{geeksforgeeks} \cite{geek} web site.
+We used the data structures (SA, LCP) implementations from the \textit{geeksforgeeks} web site \cite{geek}.
 The SA implementation is the fastest one to our knowledge. %not the fastest one as there are constant research to improve it.
 The LCP structure is constructed in $O(n \log n)$,
 slower than the $O(n)$ construction time mentionned in the paper,
 but to our knowledge no $O(1)$ implementation exists.
 
-\textcolor{red}{??}
-So we will not take the SA construction time in account into this section.
+We separate the SA construction time and the Kangaroo method execution time in the following tests.
 
 \subsubsection*{Does the pattern length modify the computation time?}
 
@@ -1158,17 +1155,18 @@ The computation time doesn't increase much if we increase the length of the patt
 
 \subsubsection*{Comparison with the naive algorithm and the exact Hamming distance algorithm}
 
-The algorithm ran on a $8$ millions letters DNA text and $1 000$ letters DNA pattern
-and we increase the value of $k$.
+We increased the value of $k$ 
+while the algorithm ran on a $8$ millions letters DNA text and $1 000$ letters DNA pattern.
 We calculated the k-mismatching algorithm's query time:
 the time the algorithm uses to compute the solution when all its needed structures has been built.
+
 The figure \ref{Kang} shows a comparison of computation times of
 the k-mismatching algorithm, the naive algorithm and the optimized exact Hamming distance algorithm.
 Each point represents the average time of $20$ runs.
 
 \begin{figure}[h]
 \centering
-\includegraphics[scale=0.55]{./figures/Kang.png}
+\includegraphics[scale=0.6]{./figures/Kang.png}
 \caption{
 Execution time of the k-mismatching algorithm $1$, exact Hamming distance algorithm and naive algorithm
 when $k$ vary.
@@ -1185,23 +1183,24 @@ For more than that, the naive algorithm is always faster.
 
 The naive algorithm and the Hamming distance algorithm have similar execution time.
 For DNA texts of $8$ millions letters, the naive algorithm is faster when $k < 260$,
-for an English text, the naive algorithm is faster for $k < 180$. 
+for an English text, the naive algorithm is faster for $k < 180$ (data not shown). 
 
-Most of the naive algorithm and Hamming distance algorithm computation times
-are dedicated to write the result is a file ($0.83$ second).
+% Most of the naive algorithm and Hamming distance algorithm computation times
+% are dedicated to write the result is a file ($0.83$ second).
 
 
 
-\subsubsection*{Is there a text on which the kangaroo algorithm is faster?}
+\subsubsection*{Is there a text on which the k-mismatching algorithm is faster?}
 
-We tried to find a type of text where the kangaroo algorithm could be more efficient than the naive algorithm.
+We tried to find a type of text where the k-mismatching algorithm could be more efficient than the naive algorithm.
 To do so, the naive algorithm should do as much comparisons as possible,
 so the text and pattern should be close.
 We made artificial texts where the entropy was very low:
-for example, a text composed of the letters $a$ and $b$ where the $b$ are found $0.1$\% of the time.
-% of the time (we call it "ratio"). In a text of 8 millions letters, a pattern of 1 000 letters, k=5 and a ratio of 0.01% (for 20 runs):
+for example a text composed of the letters $a$ and $b$ where the $b$ are found $0.1$\% of the time.
+% of the time (we call it "ratio").
 
-The k-mismatching algorithm runs in average in $15.7$ second, where the query time is $4.6$ seconds.
+In a text of 8 millions letters, a pattern of 1 000 letters, k=5 and the $b/a$ ratio is 0.01. % (for 20 runs):
+The k-mismatching algorithm runs in average in $15.7$ second, where the Kangaroo method runs in $4.6$ seconds.
 the naive algorithm runs in average in $2.7$ seconds (between $1.5$ and $4.9$ seconds)
 The naive algorithm is faster even in texts with a low entropy.
 
@@ -1212,7 +1211,7 @@ The naive algorithm is faster even in texts with a low entropy.
 Note that we didn't used the fastest structure build.
 So if we consider only the query time of the k-mismatching algorithm $1$,
 ours tests revealed that the naive algorithm and the exact Hamming distance algorithm
-are faster than the kangaroo queries is English and DNA texts for $k > 1$,
+are faster than the Kangaroo method in English and DNA texts for $k > 1$,
 and are always faster than the k-mismatching algorithm $1$. 
 
 
@@ -1237,24 +1236,23 @@ We executed the algorithm on $8$ million letters text and $10 000$ letters patte
 % We used a saved patient FFT plan.
 
 On DNA text the algorithm runs in $3.1$ seconds.
-As long as $k > 4$, the $4$ letters are frequents and the running time stays constant.
+As long as the $4$ letters are frequents, the running time stays constant.
 
-On English text and $100$ errors allowed, the algorithm selects the LCP method and runs in $14.14$ second.
+On English text and $100$ errors allowed, the algorithm selects the Kangaroo method and runs in $14.14$ second.
 For $1000$ errors allowed the algorithm selects the FFT method and runs in $20.24$ seconds
 (with $41$ frequent letters).
-\textcolor{red}{can be better, comparison with other algorithms ??}
 
 
 
 \subsubsection*{Algorithm utilisation}
 The running time of the FFT methods depends on the number of FFT it has to compute.
-The running time of the LCP method mostly depends on the structure construction time.
+The running time of the Kangaroo method mostly depends on the structure construction time.
 
 For a $8$ millions letters text and a $10 000$ letters pattern,
 the FFT method needs around $0.5$ second per letters
-while the LCP methods needs $12.5$ seconds of construction time
+while the Kangaroo methods needs $12.5$ seconds of construction time
 and up to $2$ seconds of query time.
-So for those length of files, we should use the LCP methods
+So for those length of files, we should use the Kangaroo methods
 when the pattern is composed of more than $29$ frequent letters.
 
 For DNA texts and other small alphabets, the FFT method should always be used.
@@ -1266,23 +1264,25 @@ For DNA texts and other small alphabets, the FFT method should always be used.
 \subsection{k-mismatching $3$}
 
 \subsubsection*{Implementation}
-We swapped the Approximate Hamming Distance algorithm used to compute the pattern period,
-to the exact Hamming Distance algorithm.
+We swapped the Approximate Hamming Distance algorithm 
+to the exact Hamming Distance algorithm
+to compute the pattern period,
 
 
-\textcolor{red}{WHAAT ?}
-We used the Approximate string matching algorithms instead of Karloff's algorithm.
+% \textcolor{red}{WHAAT ?}
+% We used the Approximate string matching algorithms instead of Karloff's algorithm.
 
 
 \subsubsection*{Execution time}
 
-We tested this algorithm on English and DNA sequences of $100$ thousands letters with a $10 000$ letters pattern.
+The algorithm ran on English and DNA sequences of $100$ thousands letters with a $10 000$ letters pattern.
 % We used our optimisations.
 
-On the DNA text, and $k = 10$, the algorithm uses the LCP method and runs in $7.8$ seconds.
-On the DNA text and $k = 300$, the algorithm uses the RLE method and runs in less than $0.1$ second.
-On the English text and $k = 10$, the algorithm uses the LCP method and runs in $6.6$ seconds
-On the English text and $k = 50$, the algorithm uses the RLE method and runs in $4.6$ second.
+On the DNA text, and $k = 10$, the algorithm uses the Kangaroo method and runs in $7.8$ seconds.
+With $k = 300$, the algorithm uses the RLE method and runs in less than $0.1$ second.
+
+On the English text and $k = 10$, the algorithm uses the Kangaroo method and runs in $6.6$ seconds
+With $k = 50$, the algorithm uses the RLE method and runs in $4.6$ second.
 
 The main difference between the execution time of the runs using the RLE method %(runs $2$ and $4$)
 comes from the number of infrequent letters in the text, thus the number of second derivative's updates.
@@ -1310,8 +1310,8 @@ We want to find an estimation of this threshold $t$, undefined in the paper.
 The RLE method's execution time depends on the number of pair of text/pattern run.
 The FFT method's execution time depends on the number of frequent letters.
 
-We ran the RLE section while increase the number of pair of runs and compare it
-to the FFT execution of different sizes.
+We ran the RLE section while increasing the number of pair of runs.
+We compare it to the FFT section execution time for different FFT sizes.
 The execution time of the FFT section includes the production of $T^*$ and $P^*$ strings
 and the FFT method for one letter.
 Tests show that if a second letter is computed, the execution time is close to twice the time for one letter
@@ -1338,72 +1338,71 @@ the threshold between frequent and infrequent letters is $55$ millions pairs of 
 
 
 
-\subsubsection*{Comparison: K-mismatching $3$ and exact Hamming Distance algorithms while we increase the number of pair of runs}
+% \subsubsection*{Comparison: K-mismatching $3$ and exact Hamming Distance algorithms while we increase the number of pair of runs}
 
-We want to compare the execution time of the k-mismatching $3$ algorithm to the exact Hamming distance algorithm.
-\textcolor{red}{why???}
-We created texts of $100$ differents letters and control the number of pair of runs
-between the text and pattern.
+% We want to compare the execution time of the k-mismatching $3$ algorithm to the exact Hamming distance algorithm.
+% \textcolor{red}{why???}
+% We created texts of $100$ differents letters and control the number of pair of runs
+% between the text and pattern.
 
-The algorithms ran on a $1$ million letters text, a $100$ thousand letters pattern and $k = 100$.
-In the patterns, all letters appeared with the same frequency,
-but we forced the utilisation of $0$ and $1$ FFT in both algorithm.
-The execution time of the exact Hamming distance and the k-mismatching are represented in the figure \ref{Opti01FFT}.
+% The algorithms ran on a $1$ million letters text, a $100$ thousand letters pattern and $k = 100$.
+% In the patterns, all letters appeared with the same frequency,
+% but we forced the utilisation of $0$ and $1$ FFT in both algorithm.
+% The execution time of the exact Hamming distance and the k-mismatching are represented in the figure \ref{Opti01FFT}.
 
 
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.45]{./figures/Opti01FFT.png}
-\caption{Comparison of k-mismatching $3$ and the exact Hamming distance execution times.
-Text of $1$ million letters and pattern of $100$ thousand letters with $100$ differents letters.
-We forced the utilisation of $0$ and $1$ FFT.}
-\label{Opti01FFT}
-\end{figure}
+% \begin{figure}[h]
+% \centering
+% \includegraphics[scale=0.45]{./figures/Opti01FFT.png}
+% \caption{Comparison of k-mismatching $3$ and the exact Hamming distance execution times.
+% Text of $1$ million letters and pattern of $100$ thousand letters with $100$ differents letters.
+% We forced the utilisation of $0$ and $1$ FFT.}
+% \label{Opti01FFT}
+% \end{figure}
 
-For the runs with $0$ or $1$ FFT,
-the execution time of the algorithms are similar around $300$ millions pairs of runs:
-the k-mismatching is faster under $300$ millions pair of runs.
-The same kind of curves were found for up to $20$ FFT, they also intersect around $300$ millions of runs
-(results not shown).
+% For the runs with $0$ or $1$ FFT,
+% the execution time of the algorithms are similar around $300$ millions pairs of runs:
+% the k-mismatching is faster under $300$ millions pair of runs.
+% The same kind of curves were found for up to $20$ FFT, they also intersect around $300$ millions of runs
+% (results not shown).
 
-For a $1$ millions letters text, a $100$ thousands letters pattern
-and $k$ big enough so the k-mismatching algorithm uses the FFT+RLE method,
-the $k$-mismatching algorithm runs faster when we have less than $300$ millions of pair of runs,
-for any frequent letters.
+% For a $1$ millions letters text, a $100$ thousands letters pattern
+% and $k$ big enough so the k-mismatching algorithm uses the FFT+RLE method,
+% the $k$-mismatching algorithm runs faster when we have less than $300$ millions of pair of runs,
+% for any frequent letters.
 
 
 
 \subsubsection*{Comparison of the k-mismatching $3$ and exact Hamming Distance algorithms on real files}
 
-We ran the al-mismatching $3$ algorithm
-on a $1$ million letters text and a $100$ thousands letters pattern.
-We compare it to the exact Hamming distance algorithm execution time.
+We ran the $k$-mismatching $3$ algorithm
+on $1$ million letters texts and $100$ thousands letters patterns.
+We compare its execution time to the exact Hamming distance algorithm execution time.
 
 On DNA files, the exact Hamming distance algorithm runs in $0.44$ second.
-The k-mismatching use the LCP method until $k \approx 6500$,
+The k-mismatching use the Kangaroo method until $k \approx 6500$,
 the LCP construction alone needs several seconds.
 When $k>6500$, the RLE method is used, the algorithm runs in $1.67$ second.
 As all letters are frequent, both algorithms use $4$ FFT.
-The additional computation time of the k-mismatching  comes from the period pattern calculation,
-the computation of $T^*$, $P^*$ and so on.
+The additional computation time of the k-mismatching comes from additionnal calculation: the period pattern calculation,
+the computation of $T^*$, $P^*$\ldots
 
 On English text, the exact Hamming distance algorithm runs in $1.5$ second.
-The k-mismatching use the LCP method until $k \approx 20000$,
+The k-mismatching use the Kangaroo method until $k \approx 20000$,
 the LCP construction alone needs several dozens of seconds.
 When $k>20000$, the RLE method is used, the algorithm runs in $7.5$ second.
 $18$ letters are frequent, but text and pattern aren't periodical enough to profit from the RLE method.
 
-On real DNA and English files,
-we recommend to use the exact Hamming distance algorithm rather than the k-mismatching $3$ algorithm.
 
 
 \subsubsection*{Algorithm utilisation}
 
-\textcolor{red}{rewrite!}
 The exact Hamming Distance algorithm is always faster that the k-mismatching algorithm for short alphabet, as DNA.
 
-Text and pattern should have a good periodicity, otherwise, the LCP method is too slow.
+On real DNA and English files,
+we recommend to use the exact Hamming distance algorithm rather than the k-mismatching $3$ algorithm.
 
+Text and pattern should have a good periodicity, otherwise, the Kangaroo method is too slow.
 Note that we didn't used the fastest LCP construction method.
 
 
